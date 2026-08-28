@@ -1,0 +1,9 @@
+.config/fastfetch
+.config/fish
+.config/ghostty
+.config/hypr
+.config/nvim
+.config/quickshell
+.config/rofi
+.config/fuzzy_open.sh
+.config/starship.toml
