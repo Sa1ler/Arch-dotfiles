@@ -6,6 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/lib/logger.sh"
 source "$ROOT_DIR/lib/packages.sh"
 source "$ROOT_DIR/lib/configs.sh"
+source "$ROOT_DIR/lib/services.sh"
 
 log_step "=== РЕЖИМ УСТАНОВКИ ==="
 
@@ -27,5 +28,8 @@ install_packages
 
 # 3. Ставим конфиги
 install_configs
+
+# Отключаем ненужные сервисы
+disable_unwanted_services
 
 log_ok "Установка завершена!"

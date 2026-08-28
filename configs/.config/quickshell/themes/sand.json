@@ -1,0 +1,16 @@
+{
+    "name": "Sand",
+    "colors": {
+        "background": "#1A1610",
+        "surface": "#28201A",
+        "surfaceHover": "#382E26",
+        "surfaceSelected": "#4A3E34",
+        "accent": "#D4B080",
+        "text": "#F0E8DC",
+        "textSecondary": "#B09A84",
+        "textDisabled": "#6A5E4E",
+        "textSelected": "#1A1610",
+        "border": "#382E26",
+        "separator": "#28201A"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Chocolate",
+    "colors": {
+        "background": "#1A1410",
+        "surface": "#261E18",
+        "surfaceHover": "#342A22",
+        "surfaceSelected": "#443830",
+        "accent": "#D4A050",
+        "text": "#F0E6D8",
+        "textSecondary": "#B09A88",
+        "textDisabled": "#6A5A4A",
+        "textSelected": "#1A1410",
+        "border": "#342A22",
+        "separator": "#261E18"
+    }
+}

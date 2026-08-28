@@ -1,0 +1,16 @@
+{
+    "name": "Mint Light",
+    "colors": {
+        "background": "#E8F2EC",
+        "surface": "#FFFFFF",
+        "surfaceHover": "#DCEAE2",
+        "surfaceSelected": "#CCE0D6",
+        "accent": "#4AB89A",
+        "text": "#1A2C24",
+        "textSecondary": "#6A8A7A",
+        "textDisabled": "#A0C0B0",
+        "textSelected": "#FFFFFF",
+        "border": "#CCE0D6",
+        "separator": "#DCEAE2"
+    }
+}

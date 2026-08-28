@@ -1,0 +1,16 @@
+{
+    "name": "Sakura",
+    "colors": {
+        "background": "#1A1418",
+        "surface": "#261E24",
+        "surfaceHover": "#342A32",
+        "surfaceSelected": "#443840",
+        "accent": "#FF8FA3",
+        "text": "#F0E4E8",
+        "textSecondary": "#B09AA0",
+        "textDisabled": "#6A5A62",
+        "textSelected": "#1A1418",
+        "border": "#342A32",
+        "separator": "#261E24"
+    }
+}

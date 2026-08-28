@@ -1,0 +1,16 @@
+{
+    "name": "Mint",
+    "colors": {
+        "background": "#0E1412",
+        "surface": "#16201C",
+        "surfaceHover": "#202E28",
+        "surfaceSelected": "#2A3E34",
+        "accent": "#5AE8C8",
+        "text": "#E8F4F0",
+        "textSecondary": "#90B8AE",
+        "textDisabled": "#4A6A62",
+        "textSelected": "#0E1412",
+        "border": "#202E28",
+        "separator": "#16201C"
+    }
+}

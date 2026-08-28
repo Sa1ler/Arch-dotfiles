@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lib/configs.sh — работа с конфигами
+# lib/configs.sh — работа с конфигами (папки и одиночные файлы)
 
 : "${ROOT_DIR:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
@@ -37,12 +37,17 @@ collect_configs() {
             continue
         fi
 
-        # Создаём целевую директорию
-        mkdir -p "$(dirname "$dst")"
-
-        # Копируем с удалением файлов, которых нет в источнике
-        rsync -a --delete "$src/" "$dst/"
-        log_ok "Собран: $rel_path"
+        if [[ -d "$src" ]]; then
+            # Это папка
+            mkdir -p "$dst"
+            rsync -a --delete "$src/" "$dst/"
+            log_ok "Собран (папка): $rel_path"
+        elif [[ -f "$src" ]]; then
+            # Это файл
+            mkdir -p "$(dirname "$dst")"
+            rsync -a "$src" "$dst"
+            log_ok "Собран (файл): $rel_path"
+        fi
     done
 }
 
@@ -65,17 +70,26 @@ install_configs() {
             continue
         fi
 
-        mkdir -p "$(dirname "$dst")"
-
-        # rsync сам пропустит идентичные файлы
-        # --itemize-changes покажет, что изменилось
-        local changes
-        changes=$(rsync -ai --delete "$src/" "$dst/")
-
-        if [[ -z "$changes" ]]; then
-            log_info "Без изменений: $rel_path"
-        else
-            log_ok "Обновлён: $rel_path"
+        if [[ -d "$src" ]]; then
+            # Это папка
+            mkdir -p "$dst"
+            local changes
+            changes=$(rsync -ai --delete "$src/" "$dst/")
+            if [[ -z "$changes" ]]; then
+                log_info "Без изменений: $rel_path"
+            else
+                log_ok "Обновлён: $rel_path"
+            fi
+        elif [[ -f "$src" ]]; then
+            # Это файл
+            mkdir -p "$(dirname "$dst")"
+            local changes
+            changes=$(rsync -ai "$src" "$dst")
+            if [[ -z "$changes" ]]; then
+                log_info "Без изменений: $rel_path"
+            else
+                log_ok "Обновлён: $rel_path"
+            fi
         fi
     done
 }
@@ -98,20 +112,28 @@ backup_configs() {
             continue
         fi
 
-        # Проверяем, есть ли различия
-        local diff_output
-        diff_output=$(rsync -ain --delete "$src/" "$dst/" 2>/dev/null)
-
-        if [[ -z "$diff_output" ]]; then
-            log_info "Без изменений: $rel_path"
-        else
-            # Показываем что изменится
-            log_warn "Восстанавливаю: $rel_path"
-            echo "$diff_output" | head -20 | while read -r line; do
-                echo "  $line"
-            done
-            rsync -a --delete "$src/" "$dst/"
-            ((restored++))
+        if [[ -d "$src" ]]; then
+            # Это папка
+            local diff_output
+            diff_output=$(rsync -ain --delete "$src/" "$dst/" 2>/dev/null)
+            if [[ -z "$diff_output" ]]; then
+                log_info "Без изменений: $rel_path"
+            else
+                log_warn "Восстанавливаю: $rel_path"
+                rsync -a --delete "$src/" "$dst/"
+                ((restored++))
+            fi
+        elif [[ -f "$src" ]]; then
+            # Это файл
+            local diff_output
+            diff_output=$(rsync -ain "$src" "$dst" 2>/dev/null)
+            if [[ -z "$diff_output" ]]; then
+                log_info "Без изменений: $rel_path"
+            else
+                log_warn "Восстанавливаю: $rel_path"
+                rsync -a "$src" "$dst"
+                ((restored++))
+            fi
         fi
     done
 

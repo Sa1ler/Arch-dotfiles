@@ -1,0 +1,90 @@
+import QtQuick
+
+Rectangle {
+    id: root
+
+    // ============================================================
+    // СВОЙСТВА
+    // ============================================================
+    property string themeName: "Theme Name"
+    property bool isSelected: false
+
+    property color bgColor: "#181818"
+    property color surfaceColor: "#202020"
+    property color accentColor: "#3675FF"
+    property color textColor: "#FFFFFF"
+
+    signal clicked()
+
+    // ============================================================
+    // РАЗМЕРЫ И ФОРМА
+    // ============================================================
+    implicitHeight: 52
+    radius: 12
+
+    color: isSelected ? Qt.lighter(bgColor, 1.15) : surfaceColor
+    border.width: isSelected ? 2 : 1
+    border.color: isSelected ? accentColor : (mouseArea.containsMouse ? Qt.lighter(surfaceColor, 1.3) : "#303030")
+    antialiasing: true
+
+    Behavior on color { ColorAnimation { duration: 150 } }
+    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+    // ============================================================
+    // СОДЕРЖИМОЕ: Название слева, цвета справа
+    // ============================================================
+    Row {
+        anchors {
+            fill: parent
+            leftMargin: 16
+            rightMargin: 14
+        }
+        spacing: 8
+
+        // Название темы (слева)
+        Text {
+            text: root.themeName
+            font.family: "Cascadia Code"
+            font.pixelSize: 13
+            font.weight: root.isSelected ? Font.Bold : Font.Medium
+            color: root.textColor
+            elide: Text.ElideRight
+            width: parent.width - 100 // Оставляем место для кружочков
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // Пустой разделитель (чтобы прижать кружочки вправо)
+        Item {
+            width: parent.width - 100 - (4 * 18) - 24
+            height: 1
+        }
+
+        // Кружочки цветов (справа)
+        Repeater {
+            model: [root.bgColor, root.surfaceColor, root.accentColor, root.textColor]
+
+            delegate: Rectangle {
+                width: 16
+                height: 16
+                radius: 8
+                color: modelData
+                anchors.verticalCenter: parent.verticalCenter
+                
+                // Тонкая обводка, чтобы светлые кружочки не сливались
+                border.width: 1
+                border.color: Qt.darker(modelData, 1.2)
+            }
+        }
+    }
+
+    // ============================================================
+    // ВЗАИМОДЕЙСТВИЕ
+    // ============================================================
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.clicked()
+    }
+}

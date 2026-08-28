@@ -1,0 +1,16 @@
+{
+    "name": "Sandstone",
+    "colors": {
+        "background": "#1A1610",
+        "surface": "#26201A",
+        "surfaceHover": "#342C24",
+        "surfaceSelected": "#443A30",
+        "accent": "#D4B890",
+        "text": "#F0ECE4",
+        "textSecondary": "#B0A088",
+        "textDisabled": "#6A6252",
+        "textSelected": "#1A1610",
+        "border": "#342C24",
+        "separator": "#26201A"
+    }
+}

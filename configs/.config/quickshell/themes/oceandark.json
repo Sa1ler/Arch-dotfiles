@@ -1,0 +1,16 @@
+{
+    "name": "Ocean Dark",
+    "colors": {
+        "background": "#0C141E",
+        "surface": "#14202E",
+        "surfaceHover": "#1C2C40",
+        "surfaceSelected": "#263A54",
+        "accent": "#4A9AE8",
+        "text": "#E4EEF4",
+        "textSecondary": "#8AA6B8",
+        "textDisabled": "#4A6678",
+        "textSelected": "#0C141E",
+        "border": "#1C2C40",
+        "separator": "#14202E"
+    }
+}

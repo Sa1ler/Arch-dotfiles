@@ -1,0 +1,16 @@
+{
+    "name": "Lavender",
+    "colors": {
+        "background": "#1A1624",
+        "surface": "#261E34",
+        "surfaceHover": "#342848",
+        "surfaceSelected": "#44345A",
+        "accent": "#B08AD4",
+        "text": "#F0E8F4",
+        "textSecondary": "#A898B8",
+        "textDisabled": "#6A5A78",
+        "textSelected": "#1A1624",
+        "border": "#342848",
+        "separator": "#261E34"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Celadon",
+    "colors": {
+        "background": "#0E1610",
+        "surface": "#16221A",
+        "surfaceHover": "#203026",
+        "surfaceSelected": "#2A4034",
+        "accent": "#7AD4A8",
+        "text": "#E8F4EC",
+        "textSecondary": "#90B09E",
+        "textDisabled": "#4A6A5A",
+        "textSelected": "#0E1610",
+        "border": "#203026",
+        "separator": "#16221A"
+    }
+}

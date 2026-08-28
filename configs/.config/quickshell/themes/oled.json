@@ -1,0 +1,16 @@
+{
+    "name": "OLED",
+    "colors": {
+        "background": "#000000",
+        "surface": "#0A0A0F",
+        "surfaceHover": "#14141E",
+        "surfaceSelected": "#1E1E2E",
+        "accent": "#8B9EFF",
+        "text": "#EEF2F9",
+        "textSecondary": "#7A8A9E",
+        "textDisabled": "#3D4A5A",
+        "textSelected": "#000000",
+        "border": "#1A1A24",
+        "separator": "#12121C"
+    }
+}

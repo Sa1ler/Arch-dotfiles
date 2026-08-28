@@ -1,0 +1,36 @@
+{
+    "enabled": true,
+    "attachToEdge": false,
+    "barType": "common",
+    "position": "top",
+    "autoHide": false,
+    "hideDelay": 2035,
+    "barLength": 1280,
+    "cornerRadius": 32,
+    "timeFormat": "HH:mm",
+    "barHeight": 36,
+    "layout": {
+        "left": [
+            "workspaces"
+        ],
+        "center": [
+            "clock"
+        ],
+        "right": [
+            "keyboard",
+            "wifi",
+            "volume",
+            "battery",
+            "bluetooth",
+            "cpu",
+            "ram",
+            "network"
+        ]
+    },
+    "disabledWidgets": [
+        "bluetooth",
+        "cpu",
+        "ram",
+        "network"
+    ]
+}

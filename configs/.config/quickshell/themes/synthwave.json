@@ -1,0 +1,16 @@
+{
+    "name": "Synthwave 84",
+    "colors": {
+        "background": "#0D0B1A",
+        "surface": "#18162D",
+        "surfaceHover": "#25224A",
+        "surfaceSelected": "#332E6B",
+        "accent": "#FF6AD5",
+        "text": "#F4E8FF",
+        "textSecondary": "#A894C4",
+        "textDisabled": "#594D7A",
+        "textSelected": "#0D0B1A",
+        "border": "#2A2555",
+        "separator": "#1F1C40"
+    }
+}

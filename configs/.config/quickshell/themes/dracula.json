@@ -1,0 +1,16 @@
+{
+    "name": "Dracula",
+    "colors": {
+        "background": "#282A36",
+        "surface": "#1E1F29",
+        "surfaceHover": "#343746",
+        "surfaceSelected": "#44475A",
+        "accent": "#BD93F9",
+        "text": "#F8F8F2",
+        "textSecondary": "#A4A6B0",
+        "textDisabled": "#606270",
+        "textSelected": "#FFFFFF",
+        "border": "#3D3F4E",
+        "separator": "#333544"
+    }
+}

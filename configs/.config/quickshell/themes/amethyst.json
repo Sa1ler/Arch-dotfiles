@@ -1,0 +1,16 @@
+{
+    "name": "Amethyst",
+    "colors": {
+        "background": "#140E1C",
+        "surface": "#1E1630",
+        "surfaceHover": "#2A2048",
+        "surfaceSelected": "#382C60",
+        "accent": "#C48AFF",
+        "text": "#F0E8F8",
+        "textSecondary": "#A898C0",
+        "textDisabled": "#605478",
+        "textSelected": "#140E1C",
+        "border": "#2A2048",
+        "separator": "#1E1630"
+    }
+}

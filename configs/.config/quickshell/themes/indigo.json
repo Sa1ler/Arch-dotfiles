@@ -1,0 +1,16 @@
+{
+    "name": "Indigo",
+    "colors": {
+        "background": "#0A0818",
+        "surface": "#12102A",
+        "surfaceHover": "#1C1840",
+        "surfaceSelected": "#28225A",
+        "accent": "#7A6AFF",
+        "text": "#E8E4F4",
+        "textSecondary": "#988CB0",
+        "textDisabled": "#58506A",
+        "textSelected": "#0A0818",
+        "border": "#1C1840",
+        "separator": "#12102A"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Rust",
+    "colors": {
+        "background": "#140E0A",
+        "surface": "#201812",
+        "surfaceHover": "#2E241C",
+        "surfaceSelected": "#3E3028",
+        "accent": "#E8925A",
+        "text": "#F4ECE4",
+        "textSecondary": "#B0A088",
+        "textDisabled": "#6A5E4E",
+        "textSelected": "#140E0A",
+        "border": "#2E241C",
+        "separator": "#201812"
+    }
+}

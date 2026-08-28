@@ -1,0 +1,16 @@
+{
+    "name": "Nightshade",
+    "colors": {
+        "background": "#0E0A14",
+        "surface": "#16121E",
+        "surfaceHover": "#201A2C",
+        "surfaceSelected": "#2C243E",
+        "accent": "#4AE8D4",
+        "text": "#EAE6F0",
+        "textSecondary": "#9A92AC",
+        "textDisabled": "#5A5470",
+        "textSelected": "#0E0A14",
+        "border": "#201A2C",
+        "separator": "#16121E"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Jade",
+    "colors": {
+        "background": "#0A1410",
+        "surface": "#10201A",
+        "surfaceHover": "#182E26",
+        "surfaceSelected": "#223E34",
+        "accent": "#4AE8A8",
+        "text": "#E4F4EC",
+        "textSecondary": "#88B09E",
+        "textDisabled": "#4A6A5C",
+        "textSelected": "#0A1410",
+        "border": "#182E26",
+        "separator": "#10201A"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Monokai",
+    "colors": {
+        "background": "#272822",
+        "surface": "#1E1F1A",
+        "surfaceHover": "#33342D",
+        "surfaceSelected": "#3E3D32",
+        "accent": "#F92672",
+        "text": "#F8F8F2",
+        "textSecondary": "#A6A69E",
+        "textDisabled": "#5E5E56",
+        "textSelected": "#FFFFFF",
+        "border": "#3E3D32",
+        "separator": "#33342D"
+    }
+}

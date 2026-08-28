@@ -1,0 +1,16 @@
+{
+    "name": "Midnight",
+    "colors": {
+        "background": "#080C14",
+        "surface": "#101820",
+        "surfaceHover": "#182430",
+        "surfaceSelected": "#223040",
+        "accent": "#5A8AB8",
+        "text": "#E4EAF0",
+        "textSecondary": "#8A9AA8",
+        "textDisabled": "#4A5A68",
+        "textSelected": "#080C14",
+        "border": "#182430",
+        "separator": "#101820"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Tokyo Night",
+    "colors": {
+        "background": "#1A1B26",
+        "surface": "#24283B",
+        "surfaceHover": "#2F334D",
+        "surfaceSelected": "#3D4A6B",
+        "accent": "#7AA2F7",
+        "text": "#C0CAF5",
+        "textSecondary": "#969BB5",
+        "textDisabled": "#50566D",
+        "textSelected": "#1A1B26",
+        "border": "#2F334D",
+        "separator": "#24283B"
+    }
+}

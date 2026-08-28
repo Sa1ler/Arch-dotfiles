@@ -1,0 +1,16 @@
+{
+    "name": "Oceanic",
+    "colors": {
+        "background": "#0B141C",
+        "surface": "#121E2A",
+        "surfaceHover": "#1B2D3E",
+        "surfaceSelected": "#253D54",
+        "accent": "#5BC0EB",
+        "text": "#E4F0F5",
+        "textSecondary": "#8AAABC",
+        "textDisabled": "#456476",
+        "textSelected": "#0B141C",
+        "border": "#1B2D3E",
+        "separator": "#121E2A"
+    }
+}

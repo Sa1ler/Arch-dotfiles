@@ -1,0 +1,16 @@
+{
+    "name": "Moss",
+    "colors": {
+        "background": "#141C14",
+        "surface": "#1C261C",
+        "surfaceHover": "#263226",
+        "surfaceSelected": "#324032",
+        "accent": "#A8C88A",
+        "text": "#E8F0E4",
+        "textSecondary": "#92A888",
+        "textDisabled": "#4A6048",
+        "textSelected": "#141C14",
+        "border": "#263226",
+        "separator": "#1C261C"
+    }
+}

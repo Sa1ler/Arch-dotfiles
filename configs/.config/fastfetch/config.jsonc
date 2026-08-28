@@ -1,0 +1,82 @@
+{
+    "$schema": "https://fastfetch-cli.github.io/fastfetch/json_schema.json",
+
+    "logo": {
+        "type": "small",
+        "padding": {
+            "right": 4,
+            "top": 1,
+            "left": 2
+        },
+        "color": {
+            "1": "blue",
+            "2": "cyan",
+            "3": "magenta",
+            "4": "blue",
+            "5": "cyan",
+            "6": "magenta"
+        }
+    },
+
+    "display": {
+        "separator": "  "
+    },
+
+    "modules": [
+        {
+            "type": "os",
+            "key": "󰣇  OS",
+            "keyColor": "blue"
+        },
+
+        {
+            "type": "uptime",
+            "key": "󰔟  Uptime",
+            "keyColor": "cyan"
+        },
+
+        {
+            "type": "shell",
+            "key": "  Shell",
+            "keyColor": "magenta"
+        },
+
+        {
+            "type": "terminal",
+            "key": "  Terminal",
+            "keyColor": "blue"
+        },
+
+        {
+            "type": "wm",
+            "key": "  WM",
+            "keyColor": "cyan"
+        },
+
+        {
+            "type": "memory",
+            "key": "󰍛  Memory",
+            "keyColor": "magenta"
+        },
+
+        {
+            "type": "disk",
+            "key": "󰋊  Disk",
+            "keyColor": "blue",
+            "folders": [
+                "/"
+            ]
+        },
+
+        {
+            "type": "packages",
+            "key": "󰏖  Packages",
+            "keyColor": "cyan"
+        },
+
+        {
+            "type": "custom",
+            "format": "\u001b[33mᗧ\u001b[0m  \u001b[31mᗣ\u001b[0m  \u001b[35mᗣ\u001b[0m  \u001b[36mᗣ\u001b[0m  \u001b[33mᗣ\u001b[0m"
+        }
+    ]
+}

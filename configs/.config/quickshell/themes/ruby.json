@@ -1,0 +1,16 @@
+{
+    "name": "Ruby",
+    "colors": {
+        "background": "#1A0E10",
+        "surface": "#28161A",
+        "surfaceHover": "#382028",
+        "surfaceSelected": "#4A2C34",
+        "accent": "#FF5A6A",
+        "text": "#F0E0E4",
+        "textSecondary": "#B08A92",
+        "textDisabled": "#6A5058",
+        "textSelected": "#1A0E10",
+        "border": "#382028",
+        "separator": "#28161A"
+    }
+}

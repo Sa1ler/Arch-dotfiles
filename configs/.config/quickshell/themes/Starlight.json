@@ -1,0 +1,16 @@
+{
+    "name": "Starlight",
+    "colors": {
+        "background": "#F5F0E8",
+        "surface": "#FFFFFF",
+        "surfaceHover": "#EDE6DC",
+        "surfaceSelected": "#E4DBCE",
+        "accent": "#C48B5A",
+        "text": "#2C241C",
+        "textSecondary": "#8A7A68",
+        "textDisabled": "#B8A898",
+        "textSelected": "#FFFFFF",
+        "border": "#DCD2C4",
+        "separator": "#E8DED4"
+    }
+}

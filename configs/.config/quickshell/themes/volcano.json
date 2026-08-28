@@ -1,0 +1,16 @@
+{
+    "name": "Volcano",
+    "colors": {
+        "background": "#140A08",
+        "surface": "#201210",
+        "surfaceHover": "#301C18",
+        "surfaceSelected": "#402824",
+        "accent": "#FF6B4A",
+        "text": "#F4E8E4",
+        "textSecondary": "#B09890",
+        "textDisabled": "#6A5852",
+        "textSelected": "#140A08",
+        "border": "#301C18",
+        "separator": "#201210"
+    }
+}

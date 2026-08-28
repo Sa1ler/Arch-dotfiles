@@ -1,0 +1,16 @@
+{
+    "name": "Maroon",
+    "colors": {
+        "background": "#160A0A",
+        "surface": "#221214",
+        "surfaceHover": "#321C1E",
+        "surfaceSelected": "#42282C",
+        "accent": "#E87070",
+        "text": "#F4E4E4",
+        "textSecondary": "#B09090",
+        "textDisabled": "#6A5454",
+        "textSelected": "#160A0A",
+        "border": "#321C1E",
+        "separator": "#221214"
+    }
+}

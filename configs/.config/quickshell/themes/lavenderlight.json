@@ -1,0 +1,16 @@
+{
+    "name": "Lavender Light",
+    "colors": {
+        "background": "#F0ECF4",
+        "surface": "#FFFFFF",
+        "surfaceHover": "#E8E2F0",
+        "surfaceSelected": "#DED6E8",
+        "accent": "#A88AD4",
+        "text": "#241C2C",
+        "textSecondary": "#7A6A8A",
+        "textDisabled": "#B8A8C0",
+        "textSelected": "#FFFFFF",
+        "border": "#D8CEE0",
+        "separator": "#E4DCE8"
+    }
+}

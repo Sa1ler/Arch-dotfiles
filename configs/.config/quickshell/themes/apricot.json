@@ -1,0 +1,16 @@
+{
+    "name": "Apricot",
+    "colors": {
+        "background": "#1A1410",
+        "surface": "#281E18",
+        "surfaceHover": "#382A22",
+        "surfaceSelected": "#4A382E",
+        "accent": "#FFB080",
+        "text": "#F0E4DC",
+        "textSecondary": "#B09A88",
+        "textDisabled": "#6A5A4A",
+        "textSelected": "#1A1410",
+        "border": "#382A22",
+        "separator": "#281E18"
+    }
+}

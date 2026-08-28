@@ -1,0 +1,16 @@
+{
+    "name": "Sky",
+    "colors": {
+        "background": "#E8EEF4",
+        "surface": "#FFFFFF",
+        "surfaceHover": "#DCE6F0",
+        "surfaceSelected": "#CCDCE8",
+        "accent": "#5A9AD4",
+        "text": "#1A2A38",
+        "textSecondary": "#6A8A9A",
+        "textDisabled": "#A0B8C8",
+        "textSelected": "#FFFFFF",
+        "border": "#CCDCE8",
+        "separator": "#DCE6F0"
+    }
+}

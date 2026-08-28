@@ -1,0 +1,16 @@
+{
+    "name": "Mocha",
+    "colors": {
+        "background": "#1A1410",
+        "surface": "#26201A",
+        "surfaceHover": "#342C24",
+        "surfaceSelected": "#443830",
+        "accent": "#C4A080",
+        "text": "#F0E8DC",
+        "textSecondary": "#B09A84",
+        "textDisabled": "#6A5E4E",
+        "textSelected": "#1A1410",
+        "border": "#342C24",
+        "separator": "#26201A"
+    }
+}

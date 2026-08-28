@@ -1,0 +1,16 @@
+{
+    "name": "Teal",
+    "colors": {
+        "background": "#0A1418",
+        "surface": "#102028",
+        "surfaceHover": "#182E38",
+        "surfaceSelected": "#223E4A",
+        "accent": "#5AD8D4",
+        "text": "#E4F2F0",
+        "textSecondary": "#88AEAC",
+        "textDisabled": "#4A6A68",
+        "textSelected": "#0A1418",
+        "border": "#182E38",
+        "separator": "#102028"
+    }
+}

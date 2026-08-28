@@ -14,7 +14,7 @@ collect_packages() {
     log_step "Сбор установленных пакетов"
 
     # Явно установленные пакеты из официальных репозиториев
-    pacman -Qqe | grep -v "$(pacman -Qqm)" > "$PACMAN_LIST"
+    pacman -Qqe | grep -vxFf <(pacman -Qqm) > "$PACMAN_LIST"
     log_ok "pacman.txt: $(wc -l < "$PACMAN_LIST") пакетов"
 
     # AUR / foreign пакеты

@@ -1,0 +1,16 @@
+{
+    "name": "Pine",
+    "colors": {
+        "background": "#0A120E",
+        "surface": "#101C16",
+        "surfaceHover": "#182A20",
+        "surfaceSelected": "#223A2C",
+        "accent": "#5AD488",
+        "text": "#E4F0EA",
+        "textSecondary": "#88AE9A",
+        "textDisabled": "#4A6A58",
+        "textSelected": "#0A120E",
+        "border": "#182A20",
+        "separator": "#101C16"
+    }
+}

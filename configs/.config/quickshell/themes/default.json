@@ -1,0 +1,16 @@
+{
+    "name": "Default",
+    "colors": {
+        "background": "#0E1217",
+        "surface": "#1A1F26",
+        "surfaceHover": "#252C36",
+        "surfaceSelected": "#2C3A50",
+        "accent": "#5B9BFF",
+        "text": "#F0F4F8",
+        "textSecondary": "#9AA9B9",
+        "textDisabled": "#5A6675",
+        "textSelected": "#FFFFFF",
+        "border": "#2A323D",
+        "separator": "#262E38"
+    }
+}

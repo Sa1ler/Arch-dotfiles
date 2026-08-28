@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://github.com/USER/quickahell.git"  # ← замени на свой
+REPO_URL="https://github.com/Sa1ler/Arch-dotfiles.git"  # ← замени на свой
 INSTALL_DIR="$HOME/dotfiles"
 MODE="${1:-help}"
 

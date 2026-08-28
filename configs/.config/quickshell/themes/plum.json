@@ -1,0 +1,16 @@
+{
+    "name": "Plum",
+    "colors": {
+        "background": "#140E18",
+        "surface": "#1E1426",
+        "surfaceHover": "#2C1C38",
+        "surfaceSelected": "#3C264A",
+        "accent": "#D48AE8",
+        "text": "#F0E8F4",
+        "textSecondary": "#A898B0",
+        "textDisabled": "#6A5A72",
+        "textSelected": "#140E18",
+        "border": "#2C1C38",
+        "separator": "#1E1426"
+    }
+}
