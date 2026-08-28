@@ -1,0 +1,198 @@
+# ╭──────────────────────────────────────────────╮
+# │              DEVELOPER HUD                   │
+# ╰──────────────────────────────────────────────╯
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = false
+
+format = """
+[╭─](dimmed white)$os$username$hostname
+[│ ](dimmed white)$directory$git_branch$git_status$python
+[╰─](dimmed white)$character"""
+
+right_format = "$cmd_duration$time"
+
+command_timeout = 1000
+
+
+# ──────────────────────────────────────────────
+# ARCH
+# ──────────────────────────────────────────────
+
+[os]
+disabled = false
+style = "bold blue"
+format = "[$symbol]($style) "
+
+[os.symbols]
+Arch = "󰣇"
+
+
+# ──────────────────────────────────────────────
+# USER
+# ──────────────────────────────────────────────
+
+[username]
+show_always = true
+style_user = "bold white"
+format = "[$user]($style)"
+
+
+# ──────────────────────────────────────────────
+# HOSTNAME
+# ──────────────────────────────────────────────
+
+[hostname]
+ssh_only = false
+style = "dimmed white"
+format = "[@$hostname]($style) "
+
+
+# ──────────────────────────────────────────────
+# DIRECTORY
+# ──────────────────────────────────────────────
+
+[directory]
+style = "bold cyan"
+format = "[$path]($style)  "
+
+truncation_length = 3
+truncate_to_repo = true
+
+home_symbol = "~"
+read_only = " 󰌾"
+
+
+# ──────────────────────────────────────────────
+# GIT BRANCH
+# ──────────────────────────────────────────────
+
+[git_branch]
+
+symbol = "󰘬 "
+
+style = "bold purple"
+
+# Только небольшой отступ после branch
+format = "[$symbol$branch]($style) "
+
+truncation_length = 25
+
+
+# ──────────────────────────────────────────────
+# GIT STATUS
+# ──────────────────────────────────────────────
+
+[git_status]
+
+style = "bold red"
+
+format = "[$all_status$ahead_behind]($style) "
+
+conflicted = "󰞇 "
+
+ahead = "󰶣 ${count} "
+
+behind = "󰶡 ${count} "
+
+diverged = "󰹹 "
+
+untracked = "󰋗${count} "
+
+modified = "󰏫 ${count} "
+
+staged = "󰐗 ${count} "
+
+renamed = "󰑕 ${count} "
+
+deleted = "󰍴 ${count} "
+
+
+# ──────────────────────────────────────────────
+# PYTHON
+# ──────────────────────────────────────────────
+
+[python]
+
+symbol = " "
+
+style = "bold yellow"
+
+# Иконка + версия
+format = "[$symbol 3.14.6]($style) "
+
+# Полная версия: 3.14.6
+version_format = "${major}.${minor}.${patch}"
+
+pyenv_version_name = true
+
+python_binary = [
+    "python",
+    "python3",
+    ".venv/bin/python",
+    "venv/bin/python"
+]
+
+detect_extensions = [
+    "py"
+]
+
+detect_files = [
+    "requirements.txt",
+    "pyproject.toml",
+    "Pipfile",
+    "Pipfile.lock",
+    "tox.ini",
+    "setup.py",
+    ".python-version"
+]
+
+
+# ──────────────────────────────────────────────
+# COMMAND TIME
+# ──────────────────────────────────────────────
+
+[cmd_duration]
+
+min_time = 2000
+
+show_milliseconds = false
+
+style = "bold yellow"
+
+format = "[󰔟 $duration]($style) "
+
+
+# ──────────────────────────────────────────────
+# TIME
+# ──────────────────────────────────────────────
+
+[time]
+
+disabled = false
+
+time_format = "%H:%M"
+
+style = "dimmed white"
+
+format = "[󰥔 $time]($style) "
+
+
+# ──────────────────────────────────────────────
+# PROMPT
+# ──────────────────────────────────────────────
+
+[character]
+
+success_symbol = "[❯](bold green)"
+
+error_symbol = "[❯](bold red)"
+
+vimcmd_symbol = "[❮](bold yellow)"
+
+vimcmd_replace_one_symbol = "[❮](bold purple)"
+
+vimcmd_replace_symbol = "[❮](bold purple)"
+
+vimcmd_visual_symbol = "[❮](bold cyan)"
