@@ -8,22 +8,22 @@ ShellRoot {
     id: root
 
     // ============================================================
-    // МЕНЕДЖЕРЫ
+    // МЕНЕДЖЕР ТЕМ
     // ============================================================
-    ThemeManager { id: themeManager }
-    TopBarManager { id: topbarManager }
+    ThemeManager {
+        id: themeManager
+    }
 
-    property var theme: themeManager.theme
-
-    // ============================================================
+        // ============================================================
     // ОКНО НАСТРОЕК
     // ============================================================
     SettingsWindow {
         id: settingsWindow
         visible: false
-        theme: root.theme
+        
+        // Передаем сам объект темы, а не её имя
+        theme: themeManager.theme
         themeManager: themeManager
-        topbarManager: topbarManager
     }
 
     // ============================================================
@@ -32,14 +32,23 @@ ShellRoot {
     IpcHandler {
         target: "settings"
 
+        // ========================================================
+        // TOGGLE
+        // ========================================================
         function toggle(): void {
             settingsWindow.visible = !settingsWindow.visible
         }
 
+        // ========================================================
+        // OPEN
+        // ========================================================
         function open(): void {
             settingsWindow.visible = true
         }
 
+        // ========================================================
+        // CLOSE
+        // ========================================================
         function close(): void {
             settingsWindow.visible = false
         }

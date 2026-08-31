@@ -3,22 +3,17 @@ import Quickshell
 import Quickshell.Wayland
 
 import "theme"
-import "about"
-import "notifications"
-import "topbar"
 
 PanelWindow {
     id: root
 
     property var soundManager
-    property string currentPage: "themes"
 
     // ============================================================
     // МЕНЕДЖЕРЫ (передаются из shell.qml)
     // ============================================================
     property var theme: null
     property var themeManager: null
-    property var topbarManager: null
 
     // ============================================================
     // ОСНОВНЫЕ НАСТРОЙКИ ОКНА
@@ -61,166 +56,17 @@ PanelWindow {
             height: 600
             anchors.centerIn: parent
             radius: 24
-            color: root.theme.colors.background
+            // Защита от null: если тема не загружена, используем "#181818"
+            color: root.theme && root.theme.colors ? root.theme.colors.background : "#181818"
             antialiasing: true
 
             // ====================================================
-            // ЛЕВАЯ ПАНЕЛЬ
+            // СТРАНИЦА ТЕМ (Занимает всё окно)
             // ====================================================
-            Rectangle {
-                id: sidebar
-                width: 185
-                height: parent.height
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-                color: "transparent"
-
-                // Разделитель
-                Rectangle {
-                    id: separator
-                    width: 1
-                    height: parent.height - 50
-                    anchors {
-                        right: parent.right
-                        rightMargin: 8
-                        verticalCenter: parent.verticalCenter
-                    }
-                    color: root.theme.colors.separator
-                }
-
-                // ================================================
-                // ТЕМЫ
-                // ================================================
-                SettingsButton {
-                    id: themesButton
-                    anchors {
-                        top: parent.top
-                        topMargin: 24
-                        horizontalCenter: parent.horizontalCenter
-                    }
-                    title: "Темы"
-                    icon: "󰏘"
-                    selected: root.currentPage === "themes"
-                    accentColor: root.theme.colors.accent
-                    selectedTextColor: root.theme.colors.textSelected
-                    textColor: root.theme.colors.text
-                    hoverColor: root.theme.colors.surfaceHover
-                    onClicked: root.currentPage = "themes"
-                }
-
-                // ================================================
-                // ТОПБАР
-                // ================================================
-                SettingsButton {
-                    id: topbarButton
-                    anchors {
-                        top: themesButton.bottom
-                        topMargin: 10
-                        horizontalCenter: parent.horizontalCenter
-                    }
-                    title: "Топбар"
-                    icon: "󰍛"
-                    selected: root.currentPage === "topbar"
-                    accentColor: root.theme.colors.accent
-                    selectedTextColor: root.theme.colors.textSelected
-                    textColor: root.theme.colors.text
-                    hoverColor: root.theme.colors.surfaceHover
-                    onClicked: root.currentPage = "topbar"
-                }
-
-                // ================================================
-                // УВЕДОМЛЕНИЯ
-                // ================================================
-                SettingsButton {
-                    id: notificationsButton
-                    anchors {
-                        top: topbarButton.bottom
-                        topMargin: 10
-                        horizontalCenter: parent.horizontalCenter
-                    }
-                    title: "Уведомления"
-                    icon: "󰂚"
-                    selected: root.currentPage === "notifications"
-                    accentColor: root.theme.colors.accent
-                    selectedTextColor: root.theme.colors.textSelected
-                    textColor: root.theme.colors.text
-                    hoverColor: root.theme.colors.surfaceHover
-                    onClicked: root.currentPage = "notifications"
-                }
-
-                // ================================================
-                // О СИСТЕМЕ
-                // ================================================
-                SettingsButton {
-                    id: aboutButton
-                    anchors {
-                        top: notificationsButton.bottom
-                        topMargin: 10
-                        horizontalCenter: parent.horizontalCenter
-                    }
-                    title: "О системе"
-                    icon: "󰋼"
-                    selected: root.currentPage === "about"
-                    accentColor: root.theme.colors.accent
-                    selectedTextColor: root.theme.colors.textSelected
-                    textColor: root.theme.colors.text
-                    hoverColor: root.theme.colors.surfaceHover
-                    onClicked: root.currentPage = "about"
-                }
-            }
-
-            // ====================================================
-            // ОБЛАСТЬ КОНТЕНТА
-            // ====================================================
-            Item {
-                id: content
-                anchors {
-                    left: sidebar.right
-                    right: parent.right
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-
-                // ================================================
-                // ТЕМЫ
-                // ================================================
-                ThemePage {
-                    anchors.fill: parent
-                    visible: root.currentPage === "themes"
-                    theme: root.theme
-                    themeManager: root.themeManager
-                }
-
-                // ================================================
-                // ТОПБАР
-                // ================================================
-                TopBarPage {
-                    anchors.fill: parent
-                    visible: root.currentPage === "topbar"
-                    theme: root.theme
-                    topbarManager: root.topbarManager
-                }
-
-                // ================================================
-                // УВЕДОМЛЕНИЯ
-                // ================================================
-                NotificationsPage {
-                    anchors.fill: parent
-                    visible: root.currentPage === "notifications"
-                    theme: root.theme
-                }
-
-                // ================================================
-                // О СИСТЕМЕ
-                // ================================================
-                AboutPage {
-                    anchors.fill: parent
-                    visible: root.currentPage === "about"
-                    theme: root.theme
-                }
+            ThemePage {
+                anchors.fill: parent
+                theme: root.theme
+                themeManager: root.themeManager
             }
         }
 

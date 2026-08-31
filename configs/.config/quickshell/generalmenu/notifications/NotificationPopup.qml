@@ -11,39 +11,10 @@ PanelWindow {
     property int stackSpacing: 8
 
     // ============================================================
-    // ПОЗИЦИЯ
+    // ПОЗИЦИЯ (захардкожено top-right)
     // ============================================================
     property string notificationPosition: "top-right"
-
-    readonly property string positionFile:
-        Quickshell.shellDir + "/../notification-position"
-
-    FileView {
-        id: positionReader
-        path: root.positionFile
-        watchChanges: true
-        printErrors: false
-
-        onFileChanged: reload()
-
-        onLoaded: {
-            var value = text().trim()
-            if (value !== "" && value !== root.notificationPosition) {
-                root.notificationPosition = value
-            }
-        }
-    }
-
-    // ============================================================
-    // НАПРАВЛЕНИЕ АНИМАЦИИ
-    // ============================================================
-    property string slideDirection: {
-        if (notificationPosition === "top-left" || notificationPosition === "bottom-left") return "left"
-        if (notificationPosition === "top-right" || notificationPosition === "bottom-right") return "right"
-        if (notificationPosition === "top-center") return "up"
-        if (notificationPosition === "bottom-center") return "down"
-        return "right"
-    }
+    property string slideDirection: "right"
 
     // ============================================================
     // ОКНО ВСЕГДА РАСТЯНУТО НА ВЕСЬ ЭКРАН
@@ -82,24 +53,9 @@ PanelWindow {
             return Math.max(1, total)
         }
 
-        x: {
-            var margin = 20
-            if (root.notificationPosition === "top-left" || root.notificationPosition === "bottom-left") {
-                return margin
-            }
-            if (root.notificationPosition === "top-right" || root.notificationPosition === "bottom-right") {
-                return parent.width - width - margin
-            }
-            return (parent.width - width) / 2
-        }
-
-        y: {
-            var margin = 20
-            if (root.notificationPosition.indexOf("top") !== -1) {
-                return margin
-            }
-            return parent.height - height - margin
-        }
+        // Позиция справа: ширина экрана минус ширина колонки (380) минус отступ (20)
+        x: parent.width - 380 - 20
+        y: 20
 
         Behavior on x {
             NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
@@ -120,6 +76,11 @@ PanelWindow {
 
                 width: 380
                 height: card.height
+
+                // Плавная анимация высоты при закрытии
+                Behavior on height {
+                    NumberAnimation { duration: 260; easing.type: Easing.InCubic }
+                }
 
                 y: {
                     var position = 0

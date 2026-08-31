@@ -20,8 +20,6 @@ Item {
         ])
     }
 
-    // ... остальные функции hexToHsl, getLuminance, getHueGroup без изменений ...
-
     function hexToHsl(hex) {
         if (!hex || typeof hex !== "string" || hex.length !== 7) return { h: 0, s: 0, l: 0.5 }
         try {
@@ -123,14 +121,16 @@ Item {
             font.family: "Cascadia Code"
             font.pixelSize: 26
             font.weight: Font.Bold
-            color: root.theme.colors.text
+            // Защита от null
+            color: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
         }
 
         Text {
             text: "Выберите тему. Изменения применяются мгновенно."
             font.family: "Cascadia Code"
             font.pixelSize: 13
-            color: root.theme.colors.textSecondary
+            // Защита от null
+            color: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
         }
     }
 
@@ -184,7 +184,7 @@ Item {
                                 textColor: modelData.colors.text
 
                                 onClicked: {
-                                    root.playClicks()  // <-- ЗВУК ПРИ ВЫБОРЕ ТЕМЫ
+                                    root.playClicks()
                                     if (root.themeManager) {
                                         root.themeManager.loadTheme(modelData.file)
                                     }
@@ -205,7 +205,8 @@ Item {
                 top: parent.top
                 bottom: parent.bottom
             }
-            color: root.theme.colors.surface
+            // Защита от null
+            color: root.theme && root.theme.colors ? root.theme.colors.surface : "#202020"
 
             Rectangle {
                 width: parent.width
@@ -214,7 +215,8 @@ Item {
                 y: (flickableArea.contentHeight > flickableArea.height)
                    ? (flickableArea.contentY / (flickableArea.contentHeight - flickableArea.height)) * (parent.height - height)
                    : 0
-                color: root.theme.colors.accent
+                // Защита от null
+                color: root.theme && root.theme.colors ? root.theme.colors.accent : "#3675FF"
 
                 Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
             }

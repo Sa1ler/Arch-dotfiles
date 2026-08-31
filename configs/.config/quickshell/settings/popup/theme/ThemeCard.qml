@@ -31,48 +31,53 @@ Rectangle {
     Behavior on border.color { ColorAnimation { duration: 150 } }
 
     // ============================================================
-    // СОДЕРЖИМОЕ: Название слева, цвета справа
+    // КОНТЕНТ
     // ============================================================
-    Row {
+    Item {
         anchors {
             fill: parent
             leftMargin: 16
             rightMargin: 14
         }
-        spacing: 8
 
         // Название темы (слева)
         Text {
+            anchors {
+                left: parent.left
+                verticalCenter: parent.verticalCenter
+            }
+            // Оставляем место для кружочков (4 кружка по 16px + 3 отступа по 8px = 88px + небольшой запас)
+            width: parent.width - 96
+            
             text: root.themeName
             font.family: "Cascadia Code"
             font.pixelSize: 13
             font.weight: root.isSelected ? Font.Bold : Font.Medium
             color: root.textColor
             elide: Text.ElideRight
-            width: parent.width - 100 // Оставляем место для кружочков
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        // Пустой разделитель (чтобы прижать кружочки вправо)
-        Item {
-            width: parent.width - 100 - (4 * 18) - 24
-            height: 1
         }
 
         // Кружочки цветов (справа)
-        Repeater {
-            model: [root.bgColor, root.surfaceColor, root.accentColor, root.textColor]
+        Row {
+            anchors {
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: 8
 
-            delegate: Rectangle {
-                width: 16
-                height: 16
-                radius: 8
-                color: modelData
-                anchors.verticalCenter: parent.verticalCenter
-                
-                // Тонкая обводка, чтобы светлые кружочки не сливались
-                border.width: 1
-                border.color: Qt.darker(modelData, 1.2)
+            Repeater {
+                model: [root.bgColor, root.surfaceColor, root.accentColor, root.textColor]
+
+                delegate: Rectangle {
+                    width: 16
+                    height: 16
+                    radius: 8
+                    color: modelData
+                    
+                    // Тонкая обводка, чтобы светлые кружочки не сливались
+                    border.width: 1
+                    border.color: Qt.darker(modelData, 1.2)
+                }
             }
         }
     }

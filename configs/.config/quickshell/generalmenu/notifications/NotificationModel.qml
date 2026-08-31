@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "../../common" as Common
 
 Item {
     id: root
@@ -47,7 +46,6 @@ Item {
         centerList.insert(0, { "notification": notification })
         notification.tracked = true
         saveHistory()
-        playNotificationSound()
     }
 
     function addCenterOnly(notification) {
@@ -91,42 +89,6 @@ Item {
     }
 
     property bool dndEnabled: false
-    property bool soundEnabled: true
-    property string notificationSoundFile: "notification.wav"
-
-    readonly property string soundEnabledFile: Quickshell.env("HOME") + "/.config/quickshell/notification-sound-enabled"
-    readonly property string soundConfigFile: Quickshell.env("HOME") + "/.config/quickshell/notification-sound"
-    readonly property string soundsDir: Quickshell.shellDir + "/sounds/notifications/"
-
-    FileView {
-        id: soundEnabledReader
-        path: root.soundEnabledFile
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-        onLoaded: {
-            var value = text().trim() // <-- ИСПРАВЛЕНО: text()
-            root.soundEnabled = (value !== "0")
-        }
-    }
-
-    FileView {
-        id: soundConfigReader
-        path: root.soundConfigFile
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-        onLoaded: {
-            var value = text().trim() // <-- ИСПРАВЛЕНО: text()
-            if (value !== "") root.notificationSoundFile = value
-        }
-    }
-
-    function playNotificationSound() {
-        if (root.dndEnabled || !root.soundEnabled) return
-        var soundPath = root.soundsDir + root.notificationSoundFile
-        Quickshell.execDetached(["sh", "-c", "pw-play '" + soundPath + "' 2>/dev/null || paplay '" + soundPath + "' 2>/dev/null || true"])
-    }
 
     Component.onCompleted: { ensureHistory.running = true }
 }

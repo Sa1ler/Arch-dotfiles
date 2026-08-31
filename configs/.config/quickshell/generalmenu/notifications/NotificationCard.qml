@@ -4,15 +4,6 @@ import Quickshell
 Item {
     id: root
 
-    readonly property string clickSoundPath: Quickshell.shellDir + "/sounds/clicks.wav"
-
-    function playClick() {
-        Quickshell.execDetached([
-            "sh", "-c",
-            "pw-play '" + clickSoundPath + "' 2>/dev/null || paplay '" + clickSoundPath + "' 2>/dev/null || true"
-        ])
-    }
-
     property var notification: null
     property var theme: null
     property bool autoClose: true
@@ -239,7 +230,6 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 onPressed: {
-                    root.playClick()
                     root.closeCard()
                 }
             }
