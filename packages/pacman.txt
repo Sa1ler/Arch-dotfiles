@@ -17,14 +17,17 @@ grim
 grub
 gst-plugin-pipewire
 gtk4
+htop
 hyprland
 hyprlock
 hyprpaper
 hyprshot
+imagemagick
 intel-media-driver
 intel-ucode
 iwd
 jq
+kitty
 libpulse
 libva-intel-driver
 linux
@@ -72,6 +75,7 @@ ttf-cascadia-code
 ttf-cascadia-code-nerd
 unzip
 uwsm
+vim
 vulkan-intel
 vulkan-nouveau
 vulkan-radeon
@@ -79,6 +83,7 @@ wev
 wget
 wireless_tools
 wireplumber
+wofi
 wpa_supplicant
 xdg-desktop-portal-hyprland
 xdg-utils

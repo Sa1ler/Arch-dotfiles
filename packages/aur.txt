@@ -1,4 +1,5 @@
 peaclock
+peaclock-debug
 quickshell-git
 visual-studio-code-bin
 yay

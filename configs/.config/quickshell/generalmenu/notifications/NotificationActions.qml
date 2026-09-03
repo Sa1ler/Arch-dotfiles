@@ -8,13 +8,6 @@ Item {
 
     signal actionTriggered(string actionId)
 
-    property color accentColor: root.theme.colors.accent
-    property color textColor: root.theme.colors.text
-    property color selectedTextColor: root.theme.colors.textSelected
-    property color surfaceColor: root.theme.colors.surface
-    property color surfaceHoverColor: root.theme.colors.surfaceHover
-    property color borderColor: root.theme.colors.border
-
     height: actionsColumn.implicitHeight
     width: parent ? parent.width : 0
 
@@ -33,9 +26,9 @@ Item {
                 height: 30
                 radius: 9
 
-                color: actionArea.containsMouse ? root.surfaceHoverColor : root.surfaceColor
+                color: actionArea.containsMouse ? root.theme.colors.surfaceHover : root.theme.colors.surface
                 border.width: 1
-                border.color: actionArea.containsMouse ? root.accentColor : root.borderColor
+                border.color: actionArea.containsMouse ? root.theme.colors.accent : root.theme.colors.border
                 antialiasing: true
 
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -44,7 +37,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: modelData.text || modelData.label || ""
-                    color: actionArea.containsMouse ? root.selectedTextColor : root.textColor
+                    color: actionArea.containsMouse ? root.theme.colors.textSelected : root.theme.colors.text
                     font.family: "Cascadia Code"
                     font.pixelSize: 10
                     font.bold: true

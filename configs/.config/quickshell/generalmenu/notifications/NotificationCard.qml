@@ -6,6 +6,7 @@ Item {
 
     property var notification: null
     property var theme: null
+    property var soundPlayer: null
     property bool autoClose: true
     property real closeHeight: 0
     property bool closing: false
@@ -14,25 +15,17 @@ Item {
 
     signal closed()
 
-    property color backgroundColor: root.theme.colors.background
-    property color surfaceColor: root.theme.colors.surface
-    property color surfaceHoverColor: root.theme.colors.surfaceHover
-    property color accentColor: root.theme.colors.accent
-    property color textColor: root.theme.colors.text
-    property color secondaryTextColor: root.theme.colors.textSecondary
-    property color borderColor: root.theme.colors.border
-    property color selectedTextColor: root.theme.colors.textSelected
-
     width: 380
     height: closing ? closeHeight : card.height
     opacity: 0
 
     property string notificationType: !notification ? "info" : (notification.urgency === 2 ? "critical" : "info")
     property string typeIcon: notificationType === "critical" ? "!" : "i"
-    property color typeColor: notificationType === "critical" ? "#FF453A" : root.accentColor
+    property color typeColor: notificationType === "critical" ? "#FF453A" : root.theme.colors.accent
 
     function closeCard() {
         if (closing) return
+        if (root.soundPlayer) root.soundPlayer.play("tick.wav")
         closeHeight = height
         closing = true
         expireTimer.stop()
@@ -100,12 +93,10 @@ Item {
         width: parent.width
         height: contentRow.implicitHeight + 24
         radius: 18
-        color: root.surfaceColor
+        color: root.theme.colors.surface
         antialiasing: true
-
         border.width: 1
         border.color: root.hovered ? Qt.lighter(root.typeColor, 1.15) : Qt.rgba(root.typeColor.r, root.typeColor.g, root.typeColor.b, 0.28)
-
         Behavior on border.color { ColorAnimation { duration: 180 } }
 
         Rectangle {
@@ -134,6 +125,7 @@ Item {
                 border.color: Qt.rgba(root.typeColor.r, root.typeColor.g, root.typeColor.b, root.hovered ? 0.65 : 0.32)
                 anchors.top: parent.top
                 antialiasing: true
+                Behavior on border.color { ColorAnimation { duration: 180 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -154,8 +146,6 @@ Item {
                     color: root.typeColor
                     antialiasing: true
                 }
-
-                Behavior on border.color { ColorAnimation { duration: 180 } }
             }
 
             Column {
@@ -166,7 +156,7 @@ Item {
                 Text {
                     width: parent.width
                     text: !root.notification ? "" : root.notification.appName || "Notification"
-                    color: root.secondaryTextColor
+                    color: root.theme.colors.textSecondary
                     font.family: "Cascadia Code"
                     font.pixelSize: 10
                     font.bold: true
@@ -176,7 +166,7 @@ Item {
                 Text {
                     width: parent.width
                     text: !root.notification ? "" : root.notification.summary || ""
-                    color: root.textColor
+                    color: root.theme.colors.text
                     font.family: "Cascadia Code"
                     font.pixelSize: 14
                     font.bold: true
@@ -189,7 +179,7 @@ Item {
                     width: parent.width
                     visible: !root.notification ? false : root.notification.body !== ""
                     text: !root.notification ? "" : root.notification.body || ""
-                    color: root.secondaryTextColor
+                    color: root.theme.colors.textSecondary
                     font.family: "Cascadia Code"
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
@@ -214,13 +204,13 @@ Item {
             width: 22
             height: 22
             radius: 11
-            color: closeArea.containsMouse ? Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, 0.15) : Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, 0.07)
+            color: closeArea.containsMouse ? Qt.rgba(root.theme.colors.text.r, root.theme.colors.text.g, root.theme.colors.text.b, 0.15) : Qt.rgba(root.theme.colors.text.r, root.theme.colors.text.g, root.theme.colors.text.b, 0.07)
             antialiasing: true
 
             Text {
                 anchors.centerIn: parent
                 text: "×"
-                color: root.textColor
+                color: root.theme.colors.text
                 font.family: "Cascadia Code"
                 font.pixelSize: 16
             }
@@ -229,9 +219,7 @@ Item {
                 id: closeArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onPressed: {
-                    root.closeCard()
-                }
+                onPressed: root.closeCard()
             }
         }
     }

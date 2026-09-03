@@ -10,21 +10,13 @@ Item {
     readonly property string selectedThemePath: rootPath + "selected-theme"
 
     property string currentTheme: "default"
-
     property var theme: ({
         "name": "Default",
         "colors": {
-            "background": "#0E1217",
-            "surface": "#1A1F26",
-            "surfaceHover": "#252C36",
-            "surfaceSelected": "#2C3A50",
-            "accent": "#5B9BFF",
-            "text": "#F0F4F8",
-            "textSecondary": "#9AA9B9",
-            "textDisabled": "#5A6675",
-            "textSelected": "#FFFFFF",
-            "border": "#2A323D",
-            "separator": "#262E38"
+            "background": "#0E1217", "surface": "#1A1F26", "surfaceHover": "#252C36",
+            "surfaceSelected": "#2C3A50", "accent": "#5B9BFF", "text": "#F0F4F8",
+            "textSecondary": "#9AA9B9", "textDisabled": "#5A6675", "textSelected": "#FFFFFF",
+            "border": "#2A323D", "separator": "#262E38"
         }
     })
 
@@ -33,6 +25,8 @@ Item {
     property int loadingIndex: 0
     property var loadedThemes: []
     property bool themesLoaded: false
+
+    signal themeChanging()
 
     FileView {
         id: savedThemeFile
@@ -46,7 +40,7 @@ Item {
 
     Process {
         id: findThemes
-        command: ["sh", "-c", "find " + root.themesPath + " -maxdepth 1 -type f -name '*.json' -printf '%f\\n' | sort"]
+        command: ["sh", "-c", "ls -1 '" + root.themesPath + "' 2>/dev/null | grep '\\.json$' | sort"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var output = text.trim()
@@ -132,6 +126,7 @@ Item {
     function loadTheme(name) {
         for (var i = 0; i < root.themes.length; i++) {
             if (root.themes[i].file === name) {
+                root.themeChanging()
                 root.currentTheme = root.themes[i].file
                 root.theme = root.themes[i]
                 root.saveCurrentTheme()

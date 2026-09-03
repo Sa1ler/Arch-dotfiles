@@ -7,6 +7,7 @@ Item {
     id: root
 
     property var theme: null
+    property var soundPlayer: null
     signal dndStateChanged(bool enabled)
 
     property bool wifiEnabled: false
@@ -18,18 +19,11 @@ Item {
     readonly property int blockHeight: 66
     implicitHeight: blockHeight
 
-    readonly property string clickSoundPath: Quickshell.shellDir + "/sounds/click.wav"
-
-    function playClick() {
-        Quickshell.execDetached(["sh", "-c", "pw-play '" + clickSoundPath + "' 2>/dev/null || paplay '" + clickSoundPath + "' 2>/dev/null || true"])
+    FileView {
+        id: dndFileWriter
+        path: root.dndFile
+        printErrors: false
     }
-
-    readonly property color backgroundColor: root.theme.colors.surface
-    readonly property color borderColor: root.theme.colors.border
-    readonly property color accentColor: root.theme.colors.accent
-    readonly property color textColor: root.theme.colors.text
-    readonly property color secondaryTextColor: root.theme.colors.textSecondary
-    readonly property color inactiveColor: root.theme.colors.surfaceSelected
 
     Process {
         id: wifiStatus
@@ -41,9 +35,11 @@ Item {
                 var anyEnabled = false
                 for (var i = 0; i < lines.length; i++) {
                     var parts = lines[i].split(":")
-                    if (parts.length >= 2) {
-                        if (parts[0] === "yes" || parts[0] === "*") { activeSsid = parts[1]; anyEnabled = true }
-                        else if (parts[0] !== "") anyEnabled = true
+                    if (parts.length >= 2 && parts[0] !== "") {
+                        anyEnabled = true
+                        if (parts[0] === "yes" || parts[0] === "*") {
+                            activeSsid = parts[1]
+                        }
                     }
                 }
                 root.wifiEnabled = anyEnabled
@@ -63,13 +59,18 @@ Item {
         root.wifiEnabled = !root.wifiEnabled
         wifiToggle.targetState = root.wifiEnabled ? "on" : "off"
         wifiToggle.running = true
+        if (root.soundPlayer) {
+            root.soundPlayer.play(root.wifiEnabled ? "connect.wav" : "disconnect.wav")
+        }
     }
 
     Process {
         id: bluetoothStatus
         command: ["bluetoothctl", "show"]
         stdout: StdioCollector {
-            onStreamFinished: { root.bluetoothEnabled = text.trim().indexOf("Powered: yes") !== -1 }
+            onStreamFinished: { 
+                root.bluetoothEnabled = text.indexOf("Powered: yes") !== -1 
+            }
         }
     }
 
@@ -84,22 +85,23 @@ Item {
         root.bluetoothEnabled = !root.bluetoothEnabled
         bluetoothToggle.targetState = root.bluetoothEnabled ? "on" : "off"
         bluetoothToggle.running = true
-    }
-
-    Process {
-        id: dndWriter
-        property bool pendingState: false
-        command: ["sh", "-c", "printf '%s\\n' '" + (pendingState ? "1" : "0") + "' > '" + root.dndFile + "'"]
+        if (root.soundPlayer) {
+            root.soundPlayer.play(root.bluetoothEnabled ? "connect.wav" : "disconnect.wav")
+        }
     }
 
     function toggleDnd() {
         var newState = !root.dndEnabled
         root.dndEnabled = newState
-        dndWriter.pendingState = newState
-        dndWriter.running = true
+        dndFileWriter.setText(newState ? "1" : "0")
+        
+        if (root.soundPlayer) {
+            root.soundPlayer.play(newState ? "switch.wav" : "tick.wav")
+        }
+        
         Qt.callLater(function() {
-            if (newState) Quickshell.execDetached(["notify-send", "-u", "normal", "Режим тишины", "Уведомления не будут всплывать"])
-            else Quickshell.execDetached(["notify-send", "-u", "normal", "Режим тишины выключен", "Уведомления снова будут всплывать"])
+            var msg = newState ? "Уведомления не будут всплывать" : "Уведомления снова будут всплывать"
+            Quickshell.execDetached(["notify-send", "-u", "normal", "Режим тишины", msg])
         })
         root.dndStateChanged(newState)
     }
@@ -108,9 +110,9 @@ Item {
         id: mainBlock
         anchors.fill: parent
         radius: 16
-        color: root.backgroundColor
+        color: root.theme ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
-        border.color: root.borderColor
+        border.color: root.theme ? root.theme.colors.border : "#2A323D"
 
         RowLayout {
             anchors.fill: parent
@@ -122,10 +124,10 @@ Item {
                 Layout.fillHeight: true
                 icon: root.wifiEnabled ? "󰤨" : "󰤮"
                 enabled: root.wifiEnabled
-                activeColor: root.accentColor
-                inactiveColor: root.inactiveColor
-                textColor: root.textColor
-                secondaryTextColor: root.secondaryTextColor
+                activeColor: root.theme ? root.theme.colors.accent : "#5B9BFF"
+                inactiveColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                textColor: root.theme ? root.theme.colors.text : "#F0F4F8"
+                secondaryTextColor: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                 onClicked: root.toggleWifi()
             }
 
@@ -134,10 +136,10 @@ Item {
                 Layout.fillHeight: true
                 icon: root.bluetoothEnabled ? "󰂯" : "󰂲"
                 enabled: root.bluetoothEnabled
-                activeColor: root.accentColor
-                inactiveColor: root.inactiveColor
-                textColor: root.textColor
-                secondaryTextColor: root.secondaryTextColor
+                activeColor: root.theme ? root.theme.colors.accent : "#5B9BFF"
+                inactiveColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                textColor: root.theme ? root.theme.colors.text : "#F0F4F8"
+                secondaryTextColor: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                 onClicked: root.toggleBluetooth()
             }
 
@@ -146,10 +148,10 @@ Item {
                 Layout.fillHeight: true
                 icon: root.dndEnabled ? "󰹠" : "󰂛"
                 enabled: root.dndEnabled
-                activeColor: root.accentColor
-                inactiveColor: root.inactiveColor
-                textColor: root.textColor
-                secondaryTextColor: root.secondaryTextColor
+                activeColor: root.theme ? root.theme.colors.accent : "#5B9BFF"
+                inactiveColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                textColor: root.theme ? root.theme.colors.text : "#F0F4F8"
+                secondaryTextColor: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                 onClicked: root.toggleDnd()
             }
         }
@@ -159,17 +161,23 @@ Item {
         id: btn
         property string icon: ""
         property bool enabled: false
-        property color activeColor: "#FFB080"
-        property color inactiveColor: "#303030"
-        property color textColor: "#FFFFFF"
-        property color secondaryTextColor: "#A0A0A0"
+        property color activeColor: "#5B9BFF"
+        property color inactiveColor: "#2C3A50"
+        property color textColor: "#F0F4F8"
+        property color secondaryTextColor: "#9AA9B9"
         signal clicked()
 
         radius: 12
         color: enabled ? activeColor : inactiveColor
         Behavior on color { ColorAnimation { duration: 160 } }
-        scale: hoverArea.pressed ? 0.94 : (hoverArea.containsMouse ? 1.04 : 1.0)
-        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
+        
+        scale: hoverArea.pressed ? 0.94 : (hoverArea.containsMouse ? 1.06 : 1.0)
+        Behavior on scale { 
+            NumberAnimation { 
+                duration: 120
+                easing.type: Easing.OutBack 
+            } 
+        }
 
         Text {
             anchors.centerIn: parent
@@ -185,7 +193,6 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onPressed: root.playClick()
             onClicked: btn.clicked()
         }
     }
@@ -196,7 +203,7 @@ Item {
     }
 
     Timer {
-        interval: 2000
+        interval: 5000
         repeat: true
         running: true
         onTriggered: {

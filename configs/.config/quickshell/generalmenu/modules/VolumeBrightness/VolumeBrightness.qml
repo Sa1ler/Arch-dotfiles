@@ -7,26 +7,11 @@ Item {
     id: root
 
     property var theme: null
+    property var soundPlayer: null
 
     property real brightness: 0.5
     property real volume: 0.5
     property bool muted: false
-
-    readonly property string clickSoundPath: Quickshell.shellDir + "/sounds/click.wav"
-
-    function playClick() {
-        Quickshell.execDetached(["sh", "-c", "pw-play '" + clickSoundPath + "' 2>/dev/null || paplay '" + clickSoundPath + "' 2>/dev/null || true"])
-    }
-
-    readonly property color brightnessColor: root.theme.colors.brightnessAccent ? root.theme.colors.brightnessAccent : "#F5C451"
-    readonly property color volumeColor: root.theme.colors.volumeAccent ? root.theme.colors.volumeAccent : "#5B8CFF"
-    readonly property color backgroundColor: root.theme.colors.surface
-    readonly property color trackColor: root.theme.colors.surfaceSelected
-    readonly property color borderColor: root.theme.colors.border
-    readonly property color textColor: root.theme.colors.text
-    readonly property color secondaryTextColor: root.theme.colors.textSecondary
-    readonly property color hoverColor: root.theme.colors.surfaceHover
-    readonly property color mutedColor: "#FF453A"
 
     readonly property int blockHeight: 110
     readonly property int sliderHeight: 8
@@ -83,6 +68,7 @@ Item {
         root.brightness = value
         brightnessSet.pendingValue = Math.round(value * 100)
         brightnessSet.running = true
+        if (root.soundPlayer) root.soundPlayer.playDebounced("tick.wav")
     }
 
     function setVolume(value) {
@@ -91,20 +77,21 @@ Item {
         volumeSet.pendingValue = value
         volumeSet.running = true
         if (value > 0 && root.muted) volumeMute.running = true
+        if (root.soundPlayer) root.soundPlayer.playDebounced("tick.wav")
     }
 
     function toggleMute() {
         volumeMute.running = true
-        root.playClick()
+        if (root.soundPlayer) root.soundPlayer.play("quick_click.wav")
     }
 
     Rectangle {
         id: mainBlock
         anchors.fill: parent
         radius: 16
-        color: root.backgroundColor
+        color: root.theme ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
-        border.color: root.borderColor
+        border.color: root.theme ? root.theme.colors.border : "#2A323D"
 
         ColumnLayout {
             anchors.fill: parent
@@ -116,9 +103,12 @@ Item {
                 Layout.preferredHeight: 32
                 icon: root.brightness > 0.5 ? "󰃠" : root.brightness > 0.15 ? "󰃟" : "󰃞"
                 value: root.brightness
-                color: root.brightnessColor
-                trackColor: root.trackColor
-                hoverColor: root.hoverColor
+                color: root.theme && root.theme.colors.brightnessAccent 
+                       ? root.theme.colors.brightnessAccent 
+                       : "#F5C451"
+                trackColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                hoverColor: root.theme ? root.theme.colors.surfaceHover : "#252C36"
+                backgroundColor: root.theme ? root.theme.colors.surface : "#1A1F26"
                 iconClickable: false
                 onChanged: function(newValue) { root.setBrightness(newValue) }
             }
@@ -128,9 +118,14 @@ Item {
                 Layout.preferredHeight: 32
                 icon: root.muted ? "󰝟" : root.volume <= 0 ? "󰝟" : root.volume < 0.5 ? "󰕿" : "󰕾"
                 value: root.muted ? 0 : root.volume
-                color: root.muted ? root.mutedColor : root.volumeColor
-                trackColor: root.trackColor
-                hoverColor: root.hoverColor
+                color: root.muted 
+                       ? "#FF453A" 
+                       : (root.theme && root.theme.colors.volumeAccent 
+                          ? root.theme.colors.volumeAccent 
+                          : "#5B8CFF")
+                trackColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                hoverColor: root.theme ? root.theme.colors.surfaceHover : "#252C36"
+                backgroundColor: root.theme ? root.theme.colors.surface : "#1A1F26"
                 iconClickable: true
                 onChanged: function(newValue) { root.setVolume(newValue) }
                 onIconClicked: root.toggleMute()
@@ -145,6 +140,7 @@ Item {
         property color color: "#FFB080"
         property color trackColor: "#303030"
         property color hoverColor: "#282828"
+        property color backgroundColor: "#1A1F26"
         property bool iconClickable: false
         signal changed(real newValue)
         signal iconClicked()
@@ -157,7 +153,9 @@ Item {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: 18
-                color: iconMa.containsMouse ? Qt.rgba(slider.color.r, slider.color.g, slider.color.b, 0.2) : Qt.rgba(slider.color.r, slider.color.g, slider.color.b, 0.12)
+                color: iconMa.containsMouse 
+                       ? Qt.rgba(slider.color.r, slider.color.g, slider.color.b, 0.2) 
+                       : Qt.rgba(slider.color.r, slider.color.g, slider.color.b, 0.12)
                 scale: iconMa.pressed ? 0.9 : (iconMa.containsMouse && slider.iconClickable ? 1.08 : 1.0)
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
@@ -219,7 +217,7 @@ Item {
                     anchors.verticalCenter: track.verticalCenter
                     color: slider.color
                     border.width: 2
-                    border.color: root.backgroundColor
+                    border.color: slider.backgroundColor
                     scale: mouseArea.pressed ? 1.2 : mouseArea.containsMouse ? 1.1 : 1.0
                     Behavior on x { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
                     Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
@@ -250,7 +248,7 @@ Item {
                 Layout.preferredWidth: 40
                 horizontalAlignment: Text.AlignRight
                 text: Math.round(slider.value * 100) + "%"
-                color: root.secondaryTextColor
+                color: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                 font.pixelSize: 11
                 font.bold: true
             }
@@ -263,7 +261,7 @@ Item {
     }
 
     Timer {
-        interval: 3000
+        interval: 5000
         repeat: true
         running: true
         onTriggered: {

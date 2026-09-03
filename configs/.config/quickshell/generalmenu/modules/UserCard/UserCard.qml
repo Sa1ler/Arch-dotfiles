@@ -7,17 +7,11 @@ Item {
     id: root
 
     property var theme: null
+    property var soundPlayer: null
 
-    property string username: ""
+    property string username: Quickshell.env("USER") || "user"
     property string displayName: ""
     property string avatarPath: ""
-
-    readonly property color backgroundColor: root.theme.colors.surface
-    readonly property color borderColor: root.theme.colors.border
-    readonly property color textColor: root.theme.colors.text
-    readonly property color secondaryTextColor: root.theme.colors.textSecondary
-    readonly property color selectedColor: root.theme.colors.surfaceSelected
-    readonly property color dangerColor: "#FF453A"
 
     readonly property int cardHeight: 64
     readonly property int horizontalPadding: 14
@@ -27,37 +21,17 @@ Item {
     implicitHeight: cardHeight
 
     Process {
-        id: getUsername
-        command: ["sh", "-c", "printf '%s' \"$USER\""]
+        id: getUserInfo
+        command: ["sh", "-c", "getent passwd \"$USER\" 2>/dev/null | cut -d: -f5 | cut -d, -f1; if [ -f \"$HOME/.face\" ]; then echo \"$HOME/.face\"; elif [ -f \"$HOME/.face.icon\" ]; then echo \"$HOME/.face.icon\"; fi"]
         stdout: StdioCollector {
             onStreamFinished: {
-                var name = text.trim()
-                if (name !== "") {
-                    root.username = name
-                    if (root.displayName === "") root.displayName = name
+                var lines = text.trim().split("\n")
+                if (lines.length >= 1 && lines[0] !== "") {
+                    root.displayName = lines[0]
                 }
-            }
-        }
-    }
-
-    Process {
-        id: getDisplayName
-        command: ["sh", "-c", "getent passwd \"$USER\" | cut -d: -f5 | cut -d, -f1"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var result = text.trim()
-                if (result !== "" && result !== root.username) root.displayName = result
-            }
-        }
-    }
-
-    Process {
-        id: getAvatar
-        command: ["sh", "-c", "if [ -f \"$HOME/.face\" ]; then printf '%s' \"$HOME/.face\"; elif [ -f \"$HOME/.face.icon\" ]; then printf '%s' \"$HOME/.face.icon\"; fi"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var path = text.trim()
-                if (path !== "") root.avatarPath = path
+                if (lines.length >= 2 && lines[1] !== "") {
+                    root.avatarPath = lines[1]
+                }
             }
         }
     }
@@ -67,13 +41,20 @@ Item {
         command: ["hyprctl", "dispatch", "exit"]
     }
 
+    function logout() {
+        if (root.soundPlayer) root.soundPlayer.play("disconnect.wav")
+        Qt.callLater(function() {
+            logoutProcess.running = true
+        })
+    }
+
     Rectangle {
         id: card
         anchors.fill: parent
         radius: 16
-        color: root.backgroundColor
+        color: root.theme ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
-        border.color: root.borderColor
+        border.color: root.theme ? root.theme.colors.border : "#2A323D"
 
         RowLayout {
             anchors.fill: parent
@@ -86,7 +67,7 @@ Item {
                 Layout.preferredWidth: root.avatarSize
                 Layout.preferredHeight: root.avatarSize
                 radius: width / 2
-                color: root.selectedColor
+                color: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
                 clip: true
 
                 Image {
@@ -103,7 +84,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: root.displayName !== "" ? root.displayName.charAt(0).toUpperCase() : (root.username !== "" ? root.username.charAt(0).toUpperCase() : "?")
-                    color: root.textColor
+                    color: root.theme ? root.theme.colors.text : "#F0F4F8"
                     font.pixelSize: 18
                     font.bold: true
                     visible: avatar.status !== Image.Ready
@@ -116,7 +97,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: root.displayName !== "" ? root.displayName : root.username
-                    color: root.textColor
+                    color: root.theme ? root.theme.colors.text : "#F0F4F8"
                     font.pixelSize: 14
                     font.bold: true
                     elide: Text.ElideRight
@@ -125,7 +106,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: root.username !== "" ? "@" + root.username : ""
-                    color: root.secondaryTextColor
+                    color: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                     font.pixelSize: 11
                     elide: Text.ElideRight
                     maximumLineCount: 1
@@ -137,9 +118,9 @@ Item {
                 Layout.preferredWidth: root.logoutSize
                 Layout.preferredHeight: root.logoutSize
                 radius: 12
-                color: logoutMouseArea.containsMouse ? Qt.rgba(root.dangerColor.r, root.dangerColor.g, root.dangerColor.b, 0.15) : "transparent"
+                color: logoutMouseArea.containsMouse ? Qt.rgba(1.0, 0.27, 0.23, 0.15) : "transparent"
                 border.width: 1
-                border.color: logoutMouseArea.containsMouse ? root.dangerColor : "transparent"
+                border.color: logoutMouseArea.containsMouse ? "#FF453A" : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
                 scale: logoutMouseArea.pressed ? 0.9 : (logoutMouseArea.containsMouse ? 1.05 : 1.0)
@@ -148,7 +129,7 @@ Item {
                 Text {
                     anchors.centerIn: parent
                     text: "󰍃"
-                    color: logoutMouseArea.containsMouse ? root.dangerColor : root.secondaryTextColor
+                    color: logoutMouseArea.containsMouse ? "#FF453A" : (root.theme ? root.theme.colors.textSecondary : "#9AA9B9")
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 18
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -159,15 +140,13 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: logoutProcess.running = true
+                    onClicked: root.logout()
                 }
             }
         }
     }
 
     Component.onCompleted: {
-        getUsername.running = true
-        getDisplayName.running = true
-        getAvatar.running = true
+        getUserInfo.running = true
     }
 }

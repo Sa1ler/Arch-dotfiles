@@ -8,17 +8,12 @@ PanelWindow {
 
     required property var notificationModel
     property var theme: null
+    property var soundPlayer: null
     property int stackSpacing: 8
 
-    // ============================================================
-    // ПОЗИЦИЯ (захардкожено top-right)
-    // ============================================================
     property string notificationPosition: "top-right"
     property string slideDirection: "right"
 
-    // ============================================================
-    // ОКНО ВСЕГДА РАСТЯНУТО НА ВЕСЬ ЭКРАН
-    // ============================================================
     anchors {
         top: true
         bottom: true
@@ -35,12 +30,8 @@ PanelWindow {
 
     mask: Region { item: notificationColumn }
 
-    // ============================================================
-    // КОЛОНКА УВЕДОМЛЕНИЙ
-    // ============================================================
     Item {
         id: notificationColumn
-
         width: 380
 
         height: {
@@ -53,7 +44,6 @@ PanelWindow {
             return Math.max(1, total)
         }
 
-        // Позиция справа: ширина экрана минус ширина колонки (380) минус отступ (20)
         x: parent.width - 380 - 20
         y: 20
 
@@ -77,7 +67,6 @@ PanelWindow {
                 width: 380
                 height: card.height
 
-                // Плавная анимация высоты при закрытии
                 Behavior on height {
                     NumberAnimation { duration: 260; easing.type: Easing.InCubic }
                 }
@@ -100,6 +89,7 @@ PanelWindow {
                     id: card
                     notification: delegateRoot.notification
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                     width: 380
                     autoClose: true
                     slideDirection: root.slideDirection

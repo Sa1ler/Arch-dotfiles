@@ -10,32 +10,19 @@ import "../modules/PowerMenu"
 PanelWindow {
     id: root
 
-    // ============================================================
-    // THEME (передаётся из shell.qml)
-    // ============================================================
     property var theme: null
+    property var themeManager: null
+    property var soundPlayer: null
 
-    // ============================================================
-    // STATE
-    // ============================================================
     property bool opened: false
     property bool panelVisible: false
 
-    // ============================================================
-    // NOTIFICATION MODEL
-    // ============================================================
     property var notificationModel: null
     property var notificationList: null
 
-    // ============================================================
-    // SIZE
-    // ============================================================
     readonly property int panelWidth: 380
     readonly property int panelMargin: 12
 
-    // ============================================================
-    // WINDOW
-    // ============================================================
     anchors {
         top: true
         bottom: true
@@ -45,15 +32,15 @@ PanelWindow {
 
     color: "transparent"
     visible: root.panelVisible
-
-    // ============================================================
-    // KEYBOARD FOCUS
-    // ============================================================
     focusable: root.panelVisible
 
-    // ============================================================
-    // INPUT LAYER
-    // ============================================================
+    Connections {
+        target: root.themeManager
+        function onThemeChanging() {
+            themeTransition.start()
+        }
+    }
+
     Item {
         id: inputLayer
         anchors.fill: parent
@@ -77,7 +64,8 @@ PanelWindow {
             width: root.panelWidth
             height: root.height - root.panelMargin * 2
             y: root.panelMargin
-            x: root.opened ? root.width - width : root.width
+            x: root.width - width
+            clip: true
 
             topLeftRadius: 24
             bottomLeftRadius: 24
@@ -88,12 +76,38 @@ PanelWindow {
             border.width: 1
             border.color: root.theme.colors.border
 
-            Behavior on x {
-                NumberAnimation {
+            transform: Translate {
+                id: panelTranslate
+                x: 0
+            }
+
+            states: [
+                State {
+                    name: "closed"
+                    PropertyChanges { 
+                        target: panelTranslate 
+                        x: panel.width 
+                    }
+                },
+                State {
+                    name: "open"
+                    PropertyChanges { 
+                        target: panelTranslate 
+                        x: 0 
+                    }
+                }
+            ]
+
+            transitions: Transition {
+                NumberAnimation { 
+                    target: panelTranslate
+                    property: "x"
                     duration: 380
                     easing.type: Easing.OutCubic
                 }
             }
+
+            state: root.opened ? "open" : "closed"
 
             MouseArea {
                 anchors.fill: parent
@@ -115,6 +129,7 @@ PanelWindow {
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                 }
 
                 VolumeBrightness {
@@ -126,6 +141,7 @@ PanelWindow {
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                 }
 
                 Connectivity {
@@ -137,6 +153,7 @@ PanelWindow {
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                 }
 
                 NotificationCenter {
@@ -150,18 +167,15 @@ PanelWindow {
                     anchors.rightMargin: 16
                     anchors.bottomMargin: 16
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                     notificationList: root.notificationList
 
                     onRequestClose: function(notification) {
-                        if (root.notificationModel) {
-                            root.notificationModel.removeCenter(notification)
-                        }
+                        if (root.notificationModel) root.notificationModel.removeCenter(notification)
                     }
 
                     onRequestClear: function() {
-                        if (root.notificationModel) {
-                            root.notificationModel.clearCenter()
-                        }
+                        if (root.notificationModel) root.notificationModel.clearCenter()
                     }
                 }
 
@@ -174,13 +188,41 @@ PanelWindow {
                     anchors.rightMargin: 16
                     anchors.bottomMargin: 16
                     theme: root.theme
+                    soundPlayer: root.soundPlayer
                     onActionExecuted: root.close()
+                }
+            }
+
+            Item {
+                id: themeTransitionLayer
+                anchors.fill: parent
+                z: 9999
+                clip: true
+
+                Rectangle {
+                    id: themeCircle
+                    anchors.centerIn: parent
+                    width: Math.max(parent.width, parent.height) * 2.5
+                    height: width
+                    radius: width / 2
+                    color: root.theme ? root.theme.colors.background : "#000000"
+                    scale: 0
+                    visible: scale > 0
+
+                    NumberAnimation on scale {
+                        id: themeTransition
+                        from: 0
+                        to: 1
+                        duration: 600
+                        easing.type: Easing.OutCubic
+                        running: false
+                        onStopped: themeCircle.scale = 0
+                    }
                 }
             }
         }
     }
 
-    // CLOSE TIMER
     Timer {
         id: closeTimer
         interval: 390
@@ -190,7 +232,6 @@ PanelWindow {
         }
     }
 
-    // OPEN
     function open() {
         closeTimer.stop()
         root.panelVisible = true
@@ -200,7 +241,6 @@ PanelWindow {
         })
     }
 
-    // CLOSE
     function close() {
         if (!root.opened) return
         root.opened = false

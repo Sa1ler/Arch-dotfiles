@@ -5,20 +5,23 @@ import Quickshell.Io
 
 import "panel"
 import "notifications"
+import "modules/SoundEffects"
 
 ShellRoot {
     id: root
 
-    // ============================================================
-    // THEME MANAGER
-    // ============================================================
-    ThemeManager { id: themeManager }
+    ThemeManager { 
+        id: themeManager 
+        onThemeChanging: soundPlayer.play("switch.wav")
+    }
 
     property var theme: themeManager.theme
 
-    // ============================================================
-    // DND STATE
-    // ============================================================
+    SoundPlayer {
+        id: soundPlayer
+        soundsDir: Quickshell.shellDir + "/../sounds"
+    }
+
     property bool dndEnabled: false
     readonly property string dndFile: Quickshell.shellDir + "/../notification-dnd"
 
@@ -34,17 +37,11 @@ ShellRoot {
         }
     }
 
-    // ============================================================
-    // NOTIFICATION MODEL
-    // ============================================================
     NotificationModel { 
         id: notificationModel 
         dndEnabled: root.dndEnabled
     }
 
-    // ============================================================
-    // NOTIFICATION SERVER
-    // ============================================================
     NotificationServer {
         id: notificationServer
         bodySupported: true
@@ -65,29 +62,25 @@ ShellRoot {
         }
     }
 
-    // ============================================================
-    // POPUP
-    // ============================================================
     NotificationPopup {
         notificationModel: notificationModel
         theme: root.theme
+        soundPlayer: soundPlayer
     }
 
-    // ============================================================
-    // MAIN PANEL
-    // ============================================================
     PanelWindow {
         id: panel
         theme: root.theme
+        themeManager: themeManager
+        soundPlayer: soundPlayer
         opened: false
         panelVisible: false
         notificationModel: notificationModel
         notificationList: notificationModel.centerNotifications
     }
 
-    // ============================================================
-    // IPC HANDLER
-    // ============================================================
+    
+
     IpcHandler {
         target: "panel"
 

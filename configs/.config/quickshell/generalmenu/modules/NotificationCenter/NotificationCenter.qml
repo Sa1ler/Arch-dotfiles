@@ -9,33 +9,18 @@ Item {
 
     property var notificationList: null
     property var theme: null
+    property var soundPlayer: null
 
     signal requestClose(var notification)
     signal requestClear()
-
-    readonly property string clickSoundPath: Quickshell.shellDir + "/sounds/clicks.wav"
-
-    function playClick() {
-        Quickshell.execDetached(["sh", "-c", "pw-play '" + clickSoundPath + "' 2>/dev/null || paplay '" + clickSoundPath + "' 2>/dev/null || true"])
-    }
-
-    readonly property color backgroundColor: root.theme.colors.surface
-    readonly property color borderColor: root.theme.colors.border
-    readonly property color textColor: root.theme.colors.text
-    readonly property color secondaryTextColor: root.theme.colors.textSecondary
-    readonly property color disabledTextColor: root.theme.colors.textDisabled
-    readonly property color hoverColor: root.theme.colors.surfaceHover
-    readonly property color accentColor: root.theme.colors.accent
-    readonly property color surfaceSelectedColor: root.theme.colors.surfaceSelected
-    readonly property color dangerColor: "#FF453A"
 
     Rectangle {
         id: mainBlock
         anchors.fill: parent
         radius: 16
-        color: root.backgroundColor
+        color: root.theme ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
-        border.color: root.borderColor
+        border.color: root.theme ? root.theme.colors.border : "#2A323D"
         clip: true
 
         ColumnLayout {
@@ -52,7 +37,7 @@ Item {
                     spacing: 2
                     Text {
                         text: "Уведомления"
-                        color: root.textColor
+                        color: root.theme ? root.theme.colors.text : "#F0F4F8"
                         font.pixelSize: 15
                         font.bold: true
                     }
@@ -60,7 +45,7 @@ Item {
                         text: root.notificationList != null && root.notificationList.count > 0
                               ? root.notificationList.count + " новых"
                               : "Всё прочитано"
-                        color: root.secondaryTextColor
+                        color: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
                         font.pixelSize: 11
                     }
                 }
@@ -71,9 +56,13 @@ Item {
                     width: 32
                     height: 32
                     radius: 16
-                    color: clearArea.containsMouse ? Qt.rgba(root.dangerColor.r, root.dangerColor.g, root.dangerColor.b, 0.15) : "transparent"
+                    color: clearArea.containsMouse 
+                           ? Qt.rgba(1.0, 0.27, 0.23, 0.15) 
+                           : "transparent"
                     border.width: 1
-                    border.color: clearArea.containsMouse ? root.dangerColor : "transparent"
+                    border.color: clearArea.containsMouse 
+                                  ? "#FF453A" 
+                                  : "transparent"
                     visible: root.notificationList != null && root.notificationList.count > 0
                     scale: clearArea.pressed ? 0.9 : (clearArea.containsMouse ? 1.05 : 1.0)
                     Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
@@ -82,7 +71,9 @@ Item {
                         anchors.centerIn: parent
                         text: "󰆴"
                         font.family: "JetBrainsMono Nerd Font"
-                        color: clearArea.containsMouse ? root.dangerColor : root.secondaryTextColor
+                        color: clearArea.containsMouse 
+                               ? "#FF453A" 
+                               : (root.theme ? root.theme.colors.textSecondary : "#9AA9B9")
                         font.pixelSize: 16
                     }
 
@@ -91,8 +82,10 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onPressed: root.playClick()
-                        onClicked: root.requestClear()
+                        onClicked: {
+                            if (root.soundPlayer) root.soundPlayer.play("quick_click.wav")
+                            root.requestClear()
+                        }
                     }
 
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -103,7 +96,7 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
-                color: root.borderColor
+                color: root.theme ? root.theme.colors.border : "#2A323D"
                 opacity: 0.5
             }
 
@@ -123,13 +116,13 @@ Item {
                     contentItem: Rectangle {
                         implicitWidth: 8
                         radius: 4
-                        color: root.accentColor
+                        color: root.theme ? root.theme.colors.accent : "#5B9BFF"
                         opacity: verticalScrollBar.pressed ? 1.0 : 0.6
                         Behavior on opacity { NumberAnimation { duration: 150 } }
                     }
                     background: Rectangle {
                         radius: 4
-                        color: root.surfaceSelectedColor
+                        color: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
                         opacity: 0.4
                     }
                 }
@@ -146,7 +139,10 @@ Item {
                             notification: model.notification
                             theme: root.theme
                             autoClose: false
-                            onClosed: root.requestClose(model.notification)
+                            onClosed: {
+                                if (root.soundPlayer) root.soundPlayer.play("tick.wav")
+                                root.requestClose(model.notification)
+                            }
                         }
                     }
                 }
@@ -165,20 +161,20 @@ Item {
                         text: "󰂚"
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 42
-                        color: root.disabledTextColor
+                        color: root.theme ? root.theme.colors.textDisabled : "#5A6675"
                         opacity: 0.5
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "Нет новых уведомлений"
-                        color: root.disabledTextColor
+                        color: root.theme ? root.theme.colors.textDisabled : "#5A6675"
                         font.pixelSize: 13
                         font.bold: true
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "Они появятся здесь, когда придут"
-                        color: root.disabledTextColor
+                        color: root.theme ? root.theme.colors.textDisabled : "#5A6675"
                         font.pixelSize: 11
                         opacity: 0.7
                     }

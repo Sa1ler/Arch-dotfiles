@@ -26,10 +26,39 @@ log_ok "Зависимости в порядке"
 # 2. Ставим пакеты
 install_packages
 
-# 3. Ставим конфиги
+# 3. Устанавливаем Starship (промпт для shell)
+log_step "Установка Starship"
+if ! command -v starship &>/dev/null; then
+    log_info "Устанавливаю Starship..."
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    log_ok "Starship установлен"
+else
+    log_ok "Starship уже установлен"
+fi
+
+# 4. Меняем shell на fish
+log_step "Установка fish как основного shell"
+if ! command -v fish &>/dev/null; then
+    log_warn "fish не установлен, пропускаю смену shell"
+else
+    # Проверяем, не является ли fish уже текущим shell
+    if [[ "$SHELL" == *"fish"* ]]; then
+        log_ok "fish уже является основным shell"
+    else
+        log_info "Меняю shell на fish (потребуется пароль)..."
+        # Добавляем fish в /etc/shells, если его там нет
+        if ! grep -q "$(which fish)" /etc/shells 2>/dev/null; then
+            echo "$(which fish)" | sudo tee -a /etc/shells > /dev/null
+        fi
+        chsh -s "$(which fish)"
+        log_ok "Shell изменён на fish"
+    fi
+fi
+
+# 5. Ставим конфиги
 install_configs
 
-# Отключаем ненужные сервисы
+# 6. Отключаем ненужные сервисы
 disable_unwanted_services
 
 log_ok "Установка завершена!"

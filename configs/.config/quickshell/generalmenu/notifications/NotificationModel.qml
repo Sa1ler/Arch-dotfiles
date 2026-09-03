@@ -4,12 +4,13 @@ import Quickshell.Io
 
 Item {
     id: root
+
     ListModel { id: popupList }
     property var popupNotifications: popupList
     ListModel { id: centerList }
     property var centerNotifications: centerList
 
-    readonly property string historyFile: "/home/graff/.config/quickshell/notification-history.json"
+    readonly property string historyFile: Quickshell.shellDir + "/../notification-history.json"
 
     Process {
         id: ensureHistory
