@@ -1,3 +1,4 @@
+awww
 base
 base-devel
 bluez
@@ -20,7 +21,6 @@ gtk4
 htop
 hyprland
 hyprlock
-hyprpaper
 hyprshot
 imagemagick
 intel-media-driver
@@ -75,21 +75,14 @@ ttf-cascadia-code
 ttf-cascadia-code-nerd
 unzip
 uwsm
-vim
 vulkan-intel
-vulkan-nouveau
-vulkan-radeon
 wev
 wget
 wireless_tools
 wireplumber
-wofi
 wpa_supplicant
 xdg-desktop-portal-hyprland
 xdg-utils
-xf86-video-amdgpu
-xf86-video-ati
-xf86-video-nouveau
 xorg-server
 xorg-xinit
 zram-generator

@@ -74,7 +74,7 @@ ShellRoot {
         themeManager: themeManager
         soundPlayer: soundPlayer
         opened: false
-        panelVisible: false
+        panelVisible: false1
         notificationModel: notificationModel
         notificationList: notificationModel.centerNotifications
     }

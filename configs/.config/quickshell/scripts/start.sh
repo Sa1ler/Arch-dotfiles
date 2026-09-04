@@ -10,3 +10,5 @@ quickshell -c screenshot &
 quickshell -c notifications &
 quickshell -c settings &
 quickshell -c generalmenu & 
+quickshell -c wallpaper &
+quickshell -c themepicker &
