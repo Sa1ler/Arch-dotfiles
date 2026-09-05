@@ -27,6 +27,13 @@ fi
 
 git add -A
 git commit -m "sync: $(date '+%Y-%m-%d %H:%M:%S')"
-git push
 
-log_ok "Синхронизация завершена"
+# Пытаемся запушить
+if git push 2>&1; then
+    log_ok "Синхронизация завершена"
+else
+    log_warn "Локальная и удалённая ветки разошлись, делаю rebase..."
+    git pull --rebase origin "$(git branch --show-current)"
+    git push
+    log_ok "Синхронизация завершена (после rebase)"
+fi
