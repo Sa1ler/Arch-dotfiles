@@ -1,12 +1,26 @@
-import Quickshell
 import QtQuick
+import Quickshell
+import Quickshell.Io
 
-import "panels"
+import "panel"
 
 ShellRoot {
+    id: root
 
-    TopBar {
-
+    ThemeManager {
+        id: themeManager
     }
 
+    SoundPlayer {
+        id: soundManager
+        soundsDir: Quickshell.shellDir + "/../sounds"
+    }
+
+    TopBar {
+        id: topBar
+        visible: true
+        
+        theme: themeManager.theme
+        soundManager: soundManager
+    }
 }
