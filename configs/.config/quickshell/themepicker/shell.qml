@@ -11,11 +11,26 @@ ShellRoot {
         id: themeManager
     }
 
+    SoundPlayer {
+        id: soundManager
+        soundsDir: Quickshell.shellDir + "/../sounds"
+    }
+
+    function playWindowSound(isOpen) {
+        if (isOpen) {
+            soundManager.play("list.wav")
+        } else {
+            soundManager.play("sfx.wav")
+        }
+    }
+
     IpcHandler {
         target: "themepicker"
         
         function toggle() {
-            themePickerWindow.windowVisible = !themePickerWindow.windowVisible
+            var willOpen = !themePickerWindow.windowVisible
+            themePickerWindow.windowVisible = willOpen
+            playWindowSound(willOpen)
         }
     }
 
@@ -27,8 +42,10 @@ ShellRoot {
         themeManager: themeManager
         themesList: themeManager.themes
         themesLoaded: themeManager.themesLoaded
+        soundManager: soundManager
         
         onApplyTheme: function(themeName) {
+            soundManager.play("quick_click.wav")
             themeManager.loadTheme(themeName)
             themePickerWindow.windowVisible = false
         }

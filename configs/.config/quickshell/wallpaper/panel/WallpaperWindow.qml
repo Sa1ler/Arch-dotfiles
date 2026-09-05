@@ -11,8 +11,10 @@ PanelWindow {
     property var theme: null
     property var themeManager: null
     property var wallpaperList: []
+    property var soundManager: null
     property int currentIndex: 0
     property bool windowVisible: false
+    property bool isLoaded: false
     
     signal applyWallpaper(string fileName)
 
@@ -45,16 +47,23 @@ PanelWindow {
             NumberAnimation { target: title; property: "opacity"; from: 0.9; to: 0; duration: 150 }
             NumberAnimation { target: pathView; property: "opacity"; from: 1; to: 0; duration: 180 }
         }
-        ScriptAction { script: { root.visible = false } }
+        ScriptAction { script: { root.visible = false; root.isLoaded = false } }
     }
 
     onWindowVisibleChanged: {
         if (windowVisible) {
             visible = true
             openAnimation.start()
+            loadedTimer.start()
         } else {
             closeAnimation.start()
         }
+    }
+
+    Timer {
+        id: loadedTimer
+        interval: 450
+        onTriggered: root.isLoaded = true
     }
 
     FocusScope {
@@ -240,28 +249,6 @@ PanelWindow {
                                     opacity: PathView.isCurrentItem ? 1 : 0.4
                                 }
                             }
-                            
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottomMargin: 8
-                                width: enterText.width + 16
-                                height: 24
-                                radius: 12
-                                color: Qt.rgba(0, 0, 0, 0.6)
-                                opacity: PathView.isCurrentItem ? 1 : 0
-                                
-                                Behavior on opacity { NumberAnimation { duration: 200 } }
-                                
-                                Text {
-                                    id: enterText
-                                    anchors.centerIn: parent
-                                    text: "↵ Apply"
-                                    color: "#FFF"
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                }
-                            }
                         }
                         
                         Rectangle {
@@ -280,6 +267,10 @@ PanelWindow {
                 
                 onCurrentIndexChanged: {
                     root.currentIndex = currentIndex
+                    
+                    if (root.isLoaded && root.soundManager) {
+                        root.soundManager.play("in.wav")
+                    }
                 }
             }
 
@@ -334,6 +325,9 @@ PanelWindow {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         pathView.decrementCurrentIndex()
+                        if (root.soundManager) {
+                            root.soundManager.play("in.wav")
+                        }
                     }
                 }
             }
@@ -365,6 +359,9 @@ PanelWindow {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         pathView.incrementCurrentIndex()
+                        if (root.soundManager) {
+                            root.soundManager.play("in.wav")
+                        }
                     }
                 }
             }

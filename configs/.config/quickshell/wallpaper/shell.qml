@@ -14,6 +14,11 @@ ShellRoot {
         id: themeManager
     }
 
+    SoundPlayer {
+        id: soundManager
+        soundsDir: Quickshell.shellDir + "/../sounds"
+    }
+
     FileView {
         id: savedWallpaperFile
         path: Quickshell.shellDir + "/selected-wallpaper"
@@ -25,6 +30,7 @@ ShellRoot {
             var saved = savedWallpaperFile.text().trim()
             if (saved !== "") {
                 root.selectedWallpaperPath = saved
+                console.log("Loaded saved wallpaper:", saved)
                 root.applyWallpaperDirect(saved)
             }
         }
@@ -33,27 +39,43 @@ ShellRoot {
     function applyWallpaper(fileName: string) {
         var fullPath = "/home/graff/.config/hypr/walls/" + fileName
         
+        console.log("Applying wallpaper:", fullPath)
         
         savedWallpaperFile.setText(fullPath)
         root.selectedWallpaperPath = fullPath
+        
+        soundManager.play("quick_click.wav")
         
         setWallpaperSwaybg.wallpaperPath = fullPath
         setWallpaperSwaybg.running = true
     }
 
     function applyWallpaperDirect(path: string) {
+        console.log("Direct applying wallpaper:", path)
         setWallpaperSwaybg.wallpaperPath = path
         setWallpaperSwaybg.running = true
+    }
+
+    function playWindowSound(isOpen) {
+        if (isOpen) {
+            soundManager.play("list.wav")
+        } else {
+            soundManager.play("sfx.wav")
+        }
     }
 
     IpcHandler {
         target: "wallpaper"
         
         function toggle() {
-            wallpaperWindow.windowVisible = !wallpaperWindow.windowVisible
-            if (wallpaperWindow.windowVisible && root.wallpaperList.length === 0) {
+            var willOpen = !wallpaperWindow.windowVisible
+            wallpaperWindow.windowVisible = willOpen
+            
+            if (willOpen && root.wallpaperList.length === 0) {
                 loadWallpapers.running = true
             }
+            
+            playWindowSound(willOpen)
         }
         
         function applyWallpaper(fileName: string) {
@@ -68,11 +90,11 @@ ShellRoot {
             onStreamFinished: {
                 var files = text.trim().split('\n').filter(f => f.length > 0)
                 root.wallpaperList = files
+                console.log("Loaded wallpapers:", files.length)
             }
         }
     }
 
-    // Установка обоев через swaybg (без задержки, чтобы не было мерцания)
     Process {
         id: setWallpaperSwaybg
         
@@ -82,11 +104,13 @@ ShellRoot {
         
         stdout: StdioCollector {
             onStreamFinished: {
+                console.log("swaybg output:", text)
             }
         }
         
         stderr: StdioCollector {
             onStreamFinished: {
+                console.log("swaybg error:", text)
             }
         }
     }
@@ -98,6 +122,7 @@ ShellRoot {
         theme: themeManager.theme
         themeManager: themeManager
         wallpaperList: root.wallpaperList
+        soundManager: soundManager
         
         onApplyWallpaper: function(fileName) {
             root.applyWallpaper(fileName)

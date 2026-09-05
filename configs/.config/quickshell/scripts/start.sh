@@ -12,3 +12,4 @@ quickshell -c settings &
 quickshell -c generalmenu & 
 quickshell -c wallpaper &
 quickshell -c themepicker &
+quickshell -c launcher &

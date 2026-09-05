@@ -11,9 +11,11 @@ PanelWindow {
     property var theme: null
     property var themeManager: null
     property var themesList: []
+    property var soundManager: null
     property bool themesLoaded: false
     property int currentIndex: 0
     property bool windowVisible: false
+    property bool isLoaded: false
     
     signal applyTheme(string themeName)
 
@@ -30,7 +32,6 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    // Анимация открытия
     ParallelAnimation {
         id: openAnim
         NumberAnimation { target: pickerWindow; property: "scale"; from: 0.85; to: 1; duration: 400; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
@@ -39,7 +40,6 @@ PanelWindow {
         NumberAnimation { target: themesPath; property: "opacity"; from: 0; to: 1; duration: 350 }
     }
 
-    // Анимация закрытия
     SequentialAnimation {
         id: closeAnim
         ParallelAnimation {
@@ -48,19 +48,25 @@ PanelWindow {
             NumberAnimation { target: titleText; property: "opacity"; from: 0.9; to: 0; duration: 150 }
             NumberAnimation { target: themesPath; property: "opacity"; from: 1; to: 0; duration: 180 }
         }
-        ScriptAction { script: { root.visible = false } }
+        ScriptAction { script: { root.visible = false; root.isLoaded = false } }
     }
 
     onWindowVisibleChanged: {
         if (windowVisible) {
             visible = true
             openAnim.start()
+            loadedTimer.start()
         } else {
             closeAnim.start()
         }
     }
 
-    // При загрузке тем — устанавливаем текущий индекс
+    Timer {
+        id: loadedTimer
+        interval: 450
+        onTriggered: root.isLoaded = true
+    }
+
     onThemesLoadedChanged: {
         if (themesLoaded && themesList.length > 0) {
             for (var i = 0; i < themesList.length; i++) {
@@ -100,7 +106,6 @@ PanelWindow {
             event.accepted = true
         }
 
-        // Основное окно
         Rectangle {
             id: pickerWindow
             width: 750
@@ -127,7 +132,6 @@ PanelWindow {
                 opacity: 0
             }
 
-            // Карусель тем
             PathView {
                 id: themesPath
                 anchors.top: titleText.bottom
@@ -188,7 +192,6 @@ PanelWindow {
                     property var themeData: modelData
                     property bool isCurrent: PathView.isCurrentItem
                     
-                    // Тень
                     Rectangle {
                         anchors.centerIn: parent
                         width: parent.width - 8
@@ -199,7 +202,6 @@ PanelWindow {
                         opacity: themeDelegate.isCurrent ? 0.9 : 0.3
                     }
 
-                    // Карточка темы
                     Rectangle {
                         id: themeCard
                         anchors.fill: parent
@@ -211,7 +213,6 @@ PanelWindow {
                                        (themeData.colors.accent || "#5B9BFF") : 
                                        Qt.rgba(1, 1, 1, 0.15)
                         
-                        // Мини-превью интерфейса
                         Rectangle {
                             id: previewArea
                             anchors.top: parent.top
@@ -225,7 +226,6 @@ PanelWindow {
                             color: themeData.colors.background || "#181818"
                             clip: true
                             
-                            // Имитация бара
                             Rectangle {
                                 id: previewBar
                                 anchors.top: parent.top
@@ -234,7 +234,6 @@ PanelWindow {
                                 height: 28
                                 color: themeData.colors.surface || "#1A1F26"
                                 
-                                // Точки-индикаторы на баре
                                 Row {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 8
@@ -252,7 +251,6 @@ PanelWindow {
                                     }
                                 }
                                 
-                                // Часы на баре
                                 Text {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
@@ -264,7 +262,6 @@ PanelWindow {
                                 }
                             }
                             
-                            // Имитация контента
                             Column {
                                 anchors.top: previewBar.bottom
                                 anchors.left: parent.left
@@ -296,7 +293,6 @@ PanelWindow {
                                     opacity: 0.4
                                 }
                                 
-                                // Кнопка
                                 Rectangle {
                                     width: 60
                                     height: 20
@@ -314,7 +310,6 @@ PanelWindow {
                             }
                         }
                         
-                        // Название темы
                         Text {
                             id: themeNameText
                             anchors.top: previewArea.bottom
@@ -326,7 +321,6 @@ PanelWindow {
                             font.bold: true
                         }
                         
-                        // Цветовая палитра
                         Row {
                             anchors.top: themeNameText.bottom
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -352,7 +346,6 @@ PanelWindow {
                             }
                         }
                         
-                        // Индикатор "текущая тема"
                         Rectangle {
                             anchors.bottom: parent.bottom
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -382,10 +375,13 @@ PanelWindow {
                 
                 onCurrentIndexChanged: {
                     root.currentIndex = currentIndex
+                    
+                    if (root.isLoaded && root.soundManager) {
+                        root.soundManager.play("in.wav")
+                    }
                 }
             }
 
-            // Градиентные маски по краям
             Rectangle {
                 anchors.left: parent.left
                 anchors.top: themesPath.top
@@ -410,7 +406,6 @@ PanelWindow {
                 }
             }
 
-            // Стрелка влево
             Rectangle {
                 id: leftBtn
                 anchors.left: parent.left
@@ -436,11 +431,15 @@ PanelWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: themesPath.decrementCurrentIndex()
+                    onClicked: {
+                        themesPath.decrementCurrentIndex()
+                        if (root.soundManager) {
+                            root.soundManager.play("in.wav")
+                        }
+                    }
                 }
             }
 
-            // Стрелка вправо
             Rectangle {
                 id: rightBtn
                 anchors.right: parent.right
@@ -466,11 +465,15 @@ PanelWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: themesPath.incrementCurrentIndex()
+                    onClicked: {
+                        themesPath.incrementCurrentIndex()
+                        if (root.soundManager) {
+                            root.soundManager.play("in.wav")
+                        }
+                    }
                 }
             }
 
-            // Индикаторы
             Row {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -496,7 +499,6 @@ PanelWindow {
             }
         }
 
-        // Области для закрытия по клику за пределами
         MouseArea {
             anchors { top: parent.top; left: parent.left; right: parent.right; bottom: pickerWindow.top }
             onClicked: root.windowVisible = false
