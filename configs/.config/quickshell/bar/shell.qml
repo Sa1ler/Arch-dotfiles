@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 import "panel"
 
@@ -16,11 +17,40 @@ ShellRoot {
         soundsDir: Quickshell.shellDir + "/../sounds"
     }
 
+    IpcHandler {
+        target: "topbar"
+        
+        function toggleWallpaper() {
+            topBar.toggleWallpaperMode()
+        }
+        
+        function closeWallpaper() {
+            topBar.closeWallpaperMode()
+        }
+        
+        function toggleTheme() {
+            topBar.toggleThemeMode()
+        }
+        
+        function closeTheme() {
+            topBar.closeThemeMode()
+        }
+        
+        function toggleLauncher() {
+            topBar.toggleLauncherMode()
+        }
+        
+        function closeLauncher() {
+            topBar.closeLauncherMode()
+        }
+    }
+
     TopBar {
         id: topBar
         visible: true
         
         theme: themeManager.theme
+        themeManager: themeManager
         soundManager: soundManager
     }
 }

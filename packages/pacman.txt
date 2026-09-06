@@ -28,7 +28,6 @@ intel-media-driver
 intel-ucode
 iwd
 jq
-kitty
 libpulse
 libva-intel-driver
 linux
