@@ -11,13 +11,14 @@ Item {
     property bool wallpaperMode: false
     property bool themeMode: false
     property bool launcherMode: false
+    property bool screenshotMode: false
     
     signal closed()
     
     implicitHeight: clockWidget.implicitHeight
     implicitWidth: clockWidget.implicitWidth
     
-    property bool anyModeActive: wallpaperMode || themeMode || launcherMode
+    property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode
     
     onAnyModeActiveChanged: {
         if (anyModeActive) {
@@ -161,6 +162,29 @@ Item {
             Behavior on opacity {
                 NumberAnimation {
                     duration: root.launcherMode ? 350 : 120
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+        
+        ScreenshotMenu {
+            id: screenshotMenu
+            anchors.fill: parent
+            
+            theme: root.theme
+            soundManager: root.soundManager
+            active: root.screenshotMode
+            enabled: root.screenshotMode
+            
+            onClose: {
+                root.closed()
+            }
+            
+            opacity: root.screenshotMode ? 1 : 0
+            
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.screenshotMode ? 350 : 120
                     easing.type: Easing.OutCubic
                 }
             }

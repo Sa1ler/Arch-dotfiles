@@ -43,6 +43,14 @@ ShellRoot {
         function closeLauncher() {
             topBar.closeLauncherMode()
         }
+        
+        function toggleScreenshot() {
+            topBar.toggleScreenshotMode()
+        }
+        
+        function closeScreenshot() {
+            topBar.closeScreenshotMode()
+        }
     }
 
     TopBar {

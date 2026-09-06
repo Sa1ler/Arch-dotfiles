@@ -39,6 +39,7 @@ network-manager-applet
 networkmanager
 nodejs
 npm
+obs-studio
 os-prober
 pipewire
 pipewire-alsa

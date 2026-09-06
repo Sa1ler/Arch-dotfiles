@@ -31,17 +31,23 @@ PanelWindow {
     property real launcherWidth: 440
     property real launcherHeight: 340
     
+    // Размеры для скриншотов (ещё компактнее)
+    property real screenshotWidth: 250
+    property real screenshotHeight: 76
+    
     // Режимы
     property bool wallpaperMode: false
     property bool themeMode: false
     property bool launcherMode: false
-    property bool anyModeActive: wallpaperMode || themeMode || launcherMode
+    property bool screenshotMode: false
+    property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode
 
     function toggleWallpaperMode() {
         wallpaperMode = !wallpaperMode
         if (wallpaperMode) {
             if (themeMode) themeMode = false
             if (launcherMode) launcherMode = false
+            if (screenshotMode) screenshotMode = false
         }
     }
     
@@ -54,6 +60,7 @@ PanelWindow {
         if (themeMode) {
             if (wallpaperMode) wallpaperMode = false
             if (launcherMode) launcherMode = false
+            if (screenshotMode) screenshotMode = false
         }
     }
     
@@ -66,11 +73,25 @@ PanelWindow {
         if (launcherMode) {
             if (wallpaperMode) wallpaperMode = false
             if (themeMode) themeMode = false
+            if (screenshotMode) screenshotMode = false
         }
     }
     
     function closeLauncherMode() {
         if (launcherMode) launcherMode = false
+    }
+    
+    function toggleScreenshotMode() {
+        screenshotMode = !screenshotMode
+        if (screenshotMode) {
+            if (wallpaperMode) wallpaperMode = false
+            if (themeMode) themeMode = false
+            if (launcherMode) launcherMode = false
+        }
+    }
+    
+    function closeScreenshotMode() {
+        if (screenshotMode) screenshotMode = false
     }
 
     color: "transparent"
@@ -81,7 +102,7 @@ PanelWindow {
         right: true
     }
 
-    implicitHeight: root.topMargin + root.barHeight + Math.max(root.expandedHeight, root.launcherHeight)
+    implicitHeight: root.topMargin + root.barHeight + Math.max(root.expandedHeight, root.launcherHeight, root.screenshotHeight)
 
     exclusiveZone: barHeight + topMargin
     WlrLayershell.layer: WlrLayer.Top
@@ -126,6 +147,7 @@ PanelWindow {
         
         width: {
             if (root.launcherMode) return root.launcherWidth
+            if (root.screenshotMode) return root.screenshotWidth
             if (root.wallpaperMode || root.themeMode) return root.expandedWidth
             return (root.centerSectionWidth > 0 ? 
                     root.centerSectionWidth : 
@@ -134,6 +156,7 @@ PanelWindow {
         
         height: {
             if (root.launcherMode) return root.launcherHeight
+            if (root.screenshotMode) return root.screenshotHeight
             if (root.wallpaperMode || root.themeMode) return root.expandedHeight
             return root.barHeight
         }
@@ -169,6 +192,7 @@ PanelWindow {
             wallpaperMode: root.wallpaperMode
             themeMode: root.themeMode
             launcherMode: root.launcherMode
+            screenshotMode: root.screenshotMode
             
             onClosed: {
                 if (root.wallpaperMode) {
@@ -177,6 +201,8 @@ PanelWindow {
                     root.closeThemeMode()
                 } else if (root.launcherMode) {
                     root.closeLauncherMode()
+                } else if (root.screenshotMode) {
+                    root.closeScreenshotMode()
                 }
             }
         }
