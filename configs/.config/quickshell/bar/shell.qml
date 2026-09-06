@@ -4,6 +4,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 
 import "panel"
+import "popups/time"
+import "widgets"
 
 ShellRoot {
     id: root
@@ -51,6 +53,10 @@ ShellRoot {
         function closeScreenshot() {
             topBar.closeScreenshotMode()
         }
+        
+        function toggleTimePopup() {
+            timePopupWindow.toggle()
+        }
     }
 
     TopBar {
@@ -60,5 +66,21 @@ ShellRoot {
         theme: themeManager.theme
         themeManager: themeManager
         soundManager: soundManager
+        timePopup: timePopupWindow
+        stopwatch: stopwatch  // ← ДОБАВЛЕНО
+    }
+    
+    // Попап времени — часть процесса бара
+    TimePopupWindow {
+        id: timePopupWindow
+        visible: false
+        
+        theme: themeManager.theme
+        soundManager: soundManager
+        stopwatch: stopwatch
+    }
+
+    Stopwatch {
+        id: stopwatch
     }
 }

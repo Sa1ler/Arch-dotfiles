@@ -12,6 +12,7 @@ Item {
     property bool themeMode: false
     property bool launcherMode: false
     property bool screenshotMode: false
+    property var stopwatch: null  // ← ДОБАВЛЕНО
     
     signal closed()
     
@@ -89,6 +90,7 @@ Item {
             
             theme: root.theme
             soundManager: root.soundManager
+            stopwatch: root.stopwatch  // ← ДОБАВЛЕНО
             
             opacity: root.anyModeActive ? 0 : 1
             scale: root.anyModeActive ? 0.9 : 1

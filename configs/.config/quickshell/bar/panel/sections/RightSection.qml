@@ -20,7 +20,6 @@ Item {
         KeyboardLayout {
             id: keyboardLayout
             anchors.verticalCenter: parent.verticalCenter
-            
             theme: root.theme
         }
         
@@ -28,7 +27,20 @@ Item {
         WifiIndicator {
             id: wifiIndicator
             anchors.verticalCenter: parent.verticalCenter
-            
+            theme: root.theme
+        }
+        
+        // Индикатор громкости
+        VolumeIndicator {
+            id: volumeIndicator
+            anchors.verticalCenter: parent.verticalCenter
+            theme: root.theme
+        }
+        
+        // Индикатор батареи
+        BatteryIndicator {
+            id: batteryIndicator
+            anchors.verticalCenter: parent.verticalCenter
             theme: root.theme
         }
     }

@@ -10,6 +10,8 @@ PanelWindow {
     property var theme: null
     property var themeManager: null
     property var soundManager: null
+    property var timePopup: null  // ← ДОБАВЛЕНО
+    property var stopwatch: null  // ← ДОБАВЛЕНО
     
     property real barHeight: 33
     
@@ -24,11 +26,11 @@ PanelWindow {
     property real rightSectionWidth: 0
     
     // Размеры для обоев и тем
-    property real expandedWidth: 620
+    property real expandedWidth: 580
     property real expandedHeight: 280
     
     // Размеры для лаунчера
-    property real launcherWidth: 440
+    property real launcherWidth: 400
     property real launcherHeight: 340
     
     // Размеры для скриншотов (ещё компактнее)
@@ -189,6 +191,7 @@ PanelWindow {
             theme: root.theme
             themeManager: root.themeManager
             soundManager: root.soundManager
+            stopwatch: root.stopwatch  // ← ДОБАВЛЕНО
             wallpaperMode: root.wallpaperMode
             themeMode: root.themeMode
             launcherMode: root.launcherMode
@@ -206,6 +209,20 @@ PanelWindow {
                 }
             }
         }
+        
+        // Клик по центральному блоку в обычном состоянии — открыть попап времени
+        MouseArea {
+            anchors.fill: parent
+            enabled: !root.anyModeActive
+            cursorShape: Qt.PointingHandCursor
+            
+            onClicked: {
+                if (root.timePopup) {
+                    root.timePopup.toggle()
+                }
+            }
+        }
+        
     }
     
     // ПРАВЫЙ СЕКТОР

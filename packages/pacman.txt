@@ -1,4 +1,3 @@
-awww
 base
 base-devel
 bluez
