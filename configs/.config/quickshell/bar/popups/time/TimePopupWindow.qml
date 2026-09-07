@@ -9,6 +9,9 @@ PanelWindow {
 
     property var theme: null
     property var soundManager: null
+    property var stopwatch: null
+    property var countdownTimer: null
+    
     property bool windowVisible: false
     property bool isAnimating: false
     
@@ -16,7 +19,6 @@ PanelWindow {
     property real expandedWidth: 980
     property real expandedHeight: 360
     property real barOffset: 45
-    property var stopwatch: null
 
     color: "transparent"
 
@@ -38,13 +40,13 @@ PanelWindow {
 
     function toggle() {
         windowVisible = !windowVisible
-        if (soundManager) soundManager.play(windowVisible ? "list.wav" : "sfx.wav")
+        if (soundManager) soundManager.play(windowVisible ? "list.wav" : "out.wav")
     }
     
     function close() {
         if (windowVisible) {
             windowVisible = false
-            if (soundManager) soundManager.play("sfx.wav")
+            if (soundManager) soundManager.play("out.wav")
         }
     }
 
@@ -57,7 +59,7 @@ PanelWindow {
         }
     }
 
-    // ДОРОГАЯ анимация открытия
+    // Анимация открытия
     SequentialAnimation {
         id: openAnimation
         
@@ -102,7 +104,6 @@ PanelWindow {
         
         // Фаза 3: каскадное появление контента
         ParallelAnimation {
-            // Тень появляется
             NumberAnimation { 
                 target: shadowRect 
                 property: "opacity" 
@@ -111,8 +112,6 @@ PanelWindow {
                 duration: 300 
                 easing.type: Easing.OutCubic 
             }
-            
-            // Контент сдвигается снизу вверх и появляется
             NumberAnimation { 
                 target: contentWrapper 
                 property: "y" 
@@ -134,7 +133,7 @@ PanelWindow {
         onFinished: root.isAnimating = false
     }
 
-    // ДОРОГАЯ анимация закрытия
+    // Анимация закрытия
     SequentialAnimation {
         id: closeAnimation
         
@@ -263,6 +262,7 @@ PanelWindow {
                 
                 opacity: 0
                 
+                // Календарь (слева)
                 Calendar {
                     id: calendar
                     anchors.left: parent.left
@@ -270,6 +270,7 @@ PanelWindow {
                     theme: root.theme
                 }
                 
+                // Часы (по центру)
                 BigClock {
                     id: bigClock
                     anchors.left: calendar.right
@@ -281,6 +282,7 @@ PanelWindow {
                     stopwatch: root.stopwatch
                 }
                 
+                // Секундомер/Таймер (справа)
                 StopwatchTimer {
                     id: stopwatchTimer
                     anchors.right: parent.right
@@ -288,6 +290,7 @@ PanelWindow {
                     theme: root.theme
                     soundManager: root.soundManager
                     stopwatch: root.stopwatch
+                    countdownTimer: root.countdownTimer
                 }
             }
         }

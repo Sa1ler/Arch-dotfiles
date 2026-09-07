@@ -65,7 +65,7 @@ Item {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        if (root.soundManager) root.soundManager.play("quick_click.wav")
+                        if (root.soundManager) root.soundManager.play("click.wav")
                         if (mouse.button === Qt.LeftButton) {
                             switchToWorkspace(pill.wsIndex)
                         } else if (mouse.button === Qt.RightButton) {

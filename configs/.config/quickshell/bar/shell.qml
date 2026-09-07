@@ -4,8 +4,8 @@ import Quickshell.Io
 import Quickshell.Wayland
 
 import "panel"
-import "popups/time"
 import "widgets"
+import "popups/time"
 
 ShellRoot {
     id: root
@@ -18,45 +18,27 @@ ShellRoot {
         id: soundManager
         soundsDir: Quickshell.shellDir + "/../sounds"
     }
+    
+    Stopwatch {
+        id: stopwatch
+    }
+    
+    CountdownTimer {
+        id: countdownTimer
+    }
 
     IpcHandler {
         target: "topbar"
         
-        function toggleWallpaper() {
-            topBar.toggleWallpaperMode()
-        }
-        
-        function closeWallpaper() {
-            topBar.closeWallpaperMode()
-        }
-        
-        function toggleTheme() {
-            topBar.toggleThemeMode()
-        }
-        
-        function closeTheme() {
-            topBar.closeThemeMode()
-        }
-        
-        function toggleLauncher() {
-            topBar.toggleLauncherMode()
-        }
-        
-        function closeLauncher() {
-            topBar.closeLauncherMode()
-        }
-        
-        function toggleScreenshot() {
-            topBar.toggleScreenshotMode()
-        }
-        
-        function closeScreenshot() {
-            topBar.closeScreenshotMode()
-        }
-        
-        function toggleTimePopup() {
-            timePopupWindow.toggle()
-        }
+        function toggleWallpaper() { topBar.toggleWallpaperMode() }
+        function closeWallpaper() { topBar.closeWallpaperMode() }
+        function toggleTheme() { topBar.toggleThemeMode() }
+        function closeTheme() { topBar.closeThemeMode() }
+        function toggleLauncher() { topBar.toggleLauncherMode() }
+        function closeLauncher() { topBar.closeLauncherMode() }
+        function toggleScreenshot() { topBar.toggleScreenshotMode() }
+        function closeScreenshot() { topBar.closeScreenshotMode() }
+        function toggleTimePopup() { timePopupWindow.toggle() }
     }
 
     TopBar {
@@ -67,10 +49,10 @@ ShellRoot {
         themeManager: themeManager
         soundManager: soundManager
         timePopup: timePopupWindow
-        stopwatch: stopwatch  // ← ДОБАВЛЕНО
+        stopwatch: stopwatch
+        countdownTimer: countdownTimer
     }
     
-    // Попап времени — часть процесса бара
     TimePopupWindow {
         id: timePopupWindow
         visible: false
@@ -78,9 +60,6 @@ ShellRoot {
         theme: themeManager.theme
         soundManager: soundManager
         stopwatch: stopwatch
-    }
-
-    Stopwatch {
-        id: stopwatch
+        countdownTimer: countdownTimer
     }
 }

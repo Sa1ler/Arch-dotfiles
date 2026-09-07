@@ -12,8 +12,10 @@ PanelWindow {
     property var soundManager: null
     property var timePopup: null
     property var stopwatch: null
+    property var countdownTimer: null
     
     property real barHeight: 33
+    
     property real topMargin: 6
     property real sideMargin: 3
     property real sectionSpacing: 100
@@ -24,18 +26,29 @@ PanelWindow {
     property real centerSectionWidth: 0
     property real rightSectionWidth: 0
     
+    // Размеры для обоев и тем
     property real expandedWidth: 580
     property real expandedHeight: 280
+    
+    // Размеры для лаунчера
     property real launcherWidth: 400
     property real launcherHeight: 340
+    
+    // Размеры для скриншотов
     property real screenshotWidth: 250
     property real screenshotHeight: 76
     
+    // Размеры для завершения таймера
+    property real timerFinishedWidth: 300
+    property real timerFinishedHeight: 120
+    
+    // Режимы
     property bool wallpaperMode: false
     property bool themeMode: false
     property bool launcherMode: false
     property bool screenshotMode: false
-    property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode
+    property bool timerFinishedMode: false
+    property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode || timerFinishedMode
     
     // ===== TextMetrics для точного вычисления ширины часов =====
     readonly property var monthNames: [
@@ -62,19 +75,21 @@ PanelWindow {
         }
     }
     
-    // Фиксированная ширина секундомера (иконка + "00:00" + padding)
-    property real stopwatchBadgeWidth: 70
+    // Фиксированная ширина бейджа (иконка + "00:00" + padding)
+    property real badgeWidth: 70
     
     // Вычисляемые ширины центрального блока
     property real centerBaseWidth: timeMetrics.advanceWidth + 10 + 5 + 10 + dateMetrics.advanceWidth + sectionPadding * 2 + 12
-    property real centerExpandedWidth: timeMetrics.advanceWidth + 10 + stopwatchBadgeWidth + 10 + dateMetrics.advanceWidth + sectionPadding * 2 + 12
+    property real centerExpandedWidth: timeMetrics.advanceWidth + 10 + badgeWidth + 10 + dateMetrics.advanceWidth + sectionPadding * 2 + 12
 
+    // ===== Функции переключения режимов =====
     function toggleWallpaperMode() {
         wallpaperMode = !wallpaperMode
         if (wallpaperMode) {
             if (themeMode) themeMode = false
             if (launcherMode) launcherMode = false
             if (screenshotMode) screenshotMode = false
+            if (timerFinishedMode) closeTimerFinishedMode()
         }
     }
     
@@ -88,6 +103,7 @@ PanelWindow {
             if (wallpaperMode) wallpaperMode = false
             if (launcherMode) launcherMode = false
             if (screenshotMode) screenshotMode = false
+            if (timerFinishedMode) closeTimerFinishedMode()
         }
     }
     
@@ -101,6 +117,7 @@ PanelWindow {
             if (wallpaperMode) wallpaperMode = false
             if (themeMode) themeMode = false
             if (screenshotMode) screenshotMode = false
+            if (timerFinishedMode) closeTimerFinishedMode()
         }
     }
     
@@ -114,11 +131,48 @@ PanelWindow {
             if (wallpaperMode) wallpaperMode = false
             if (themeMode) themeMode = false
             if (launcherMode) launcherMode = false
+            if (timerFinishedMode) closeTimerFinishedMode()
         }
     }
     
     function closeScreenshotMode() {
         if (screenshotMode) screenshotMode = false
+    }
+    
+    function closeTimerFinishedMode() {
+        timerFinishedMode = false
+        if (countdownTimer) countdownTimer.dismiss()
+        autoCloseTimer.stop()
+    }
+    
+    // ===== Реакция на завершение таймера =====
+    Connections {
+        target: root.countdownTimer
+        
+        function onFinishedChanged() {
+            if (countdownTimer && countdownTimer.finished) {
+                // Закрываем другие режимы
+                if (wallpaperMode) wallpaperMode = false
+                if (themeMode) themeMode = false
+                if (launcherMode) launcherMode = false
+                if (screenshotMode) screenshotMode = false
+                
+                timerFinishedMode = true
+                autoCloseTimer.restart()
+                if (soundManager) soundManager.play("tip.wav")
+            } else {
+                if (timerFinishedMode) timerFinishedMode = false
+            }
+        }
+    }
+    
+    // Автозакрытие через 5 секунд
+    Timer {
+        id: autoCloseTimer
+        interval: 5000
+        onTriggered: {
+            root.closeTimerFinishedMode()
+        }
     }
 
     color: "transparent"
@@ -129,7 +183,7 @@ PanelWindow {
         right: true
     }
 
-    implicitHeight: root.topMargin + root.barHeight + Math.max(root.expandedHeight, root.launcherHeight, root.screenshotHeight)
+    implicitHeight: root.topMargin + root.barHeight + Math.max(root.expandedHeight, root.launcherHeight, root.screenshotHeight, root.timerFinishedHeight)
 
     exclusiveZone: barHeight + topMargin
     WlrLayershell.layer: WlrLayer.Top
@@ -141,6 +195,7 @@ PanelWindow {
         Region { item: rightSectionBg }
     }
 
+    // ===== ЛЕВЫЙ СЕКТОР =====
     Rectangle {
         id: leftSectionBg
         anchors.top: parent.top
@@ -164,6 +219,7 @@ PanelWindow {
         }
     }
     
+    // ===== ЦЕНТРАЛЬНЫЙ СЕКТОР =====
     Rectangle {
         id: centerSectionBg
         anchors.top: parent.top
@@ -171,14 +227,20 @@ PanelWindow {
         anchors.topMargin: root.topMargin
         
         width: {
+            if (root.timerFinishedMode) return root.timerFinishedWidth
             if (root.launcherMode) return root.launcherWidth
             if (root.screenshotMode) return root.screenshotWidth
             if (root.wallpaperMode || root.themeMode) return root.expandedWidth
-            // Обычный режим: зависит от секундомера
-            return root.stopwatch && root.stopwatch.running ? root.centerExpandedWidth : root.centerBaseWidth
+            
+            // Обычный режим: зависит от секундомера/таймера
+            var hasTimer = root.countdownTimer && root.countdownTimer.running
+            var hasStopwatch = root.stopwatch && root.stopwatch.running
+            if (hasTimer || hasStopwatch) return root.centerExpandedWidth
+            return root.centerBaseWidth
         }
         
         height: {
+            if (root.timerFinishedMode) return root.timerFinishedHeight
             if (root.launcherMode) return root.launcherHeight
             if (root.screenshotMode) return root.screenshotHeight
             if (root.wallpaperMode || root.themeMode) return root.expandedHeight
@@ -191,7 +253,6 @@ PanelWindow {
         border.color: root.theme.colors.border || "#2A2A2A"
         clip: true
         
-        // ПЛАВНАЯ АНИМАЦИЯ ширины — синхронная для рамки и содержимого
         Behavior on width {
             NumberAnimation {
                 duration: 450
@@ -215,10 +276,12 @@ PanelWindow {
             themeManager: root.themeManager
             soundManager: root.soundManager
             stopwatch: root.stopwatch
+            countdownTimer: root.countdownTimer
             wallpaperMode: root.wallpaperMode
             themeMode: root.themeMode
             launcherMode: root.launcherMode
             screenshotMode: root.screenshotMode
+            timerFinishedMode: root.timerFinishedMode
             
             onClosed: {
                 if (root.wallpaperMode) {
@@ -229,10 +292,13 @@ PanelWindow {
                     root.closeLauncherMode()
                 } else if (root.screenshotMode) {
                     root.closeScreenshotMode()
+                } else if (root.timerFinishedMode) {
+                    root.closeTimerFinishedMode()
                 }
             }
         }
         
+        // Клик по центральному блоку в обычном состоянии — открыть попап времени
         MouseArea {
             anchors.fill: parent
             enabled: !root.anyModeActive
@@ -246,6 +312,7 @@ PanelWindow {
         }
     }
     
+    // ===== ПРАВЫЙ СЕКТОР =====
     Rectangle {
         id: rightSectionBg
         anchors.top: parent.top
