@@ -10,11 +10,10 @@ PanelWindow {
     property var theme: null
     property var themeManager: null
     property var soundManager: null
-    property var timePopup: null  // ← ДОБАВЛЕНО
-    property var stopwatch: null  // ← ДОБАВЛЕНО
+    property var timePopup: null
+    property var stopwatch: null
     
     property real barHeight: 33
-    
     property real topMargin: 6
     property real sideMargin: 3
     property real sectionSpacing: 100
@@ -25,24 +24,50 @@ PanelWindow {
     property real centerSectionWidth: 0
     property real rightSectionWidth: 0
     
-    // Размеры для обоев и тем
     property real expandedWidth: 580
     property real expandedHeight: 280
-    
-    // Размеры для лаунчера
     property real launcherWidth: 400
     property real launcherHeight: 340
-    
-    // Размеры для скриншотов (ещё компактнее)
     property real screenshotWidth: 250
     property real screenshotHeight: 76
     
-    // Режимы
     property bool wallpaperMode: false
     property bool themeMode: false
     property bool launcherMode: false
     property bool screenshotMode: false
     property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode
+    
+    // ===== TextMetrics для точного вычисления ширины часов =====
+    readonly property var monthNames: [
+        "января", "февраля", "марта", "апреля", "мая", "июня",
+        "июля", "августа", "сентября", "октября", "ноября", "декабря"
+    ]
+    
+    TextMetrics {
+        id: timeMetrics
+        font.family: "JetBrainsMono Nerd Font Mono"
+        font.pixelSize: 17
+        font.weight: Font.Black
+        text: Qt.formatTime(new Date(), "HH:mm")
+    }
+    
+    TextMetrics {
+        id: dateMetrics
+        font.family: "JetBrainsMono Nerd Font Mono"
+        font.pixelSize: 15
+        font.weight: Font.Black
+        text: {
+            var now = new Date()
+            return now.getDate() + " " + root.monthNames[now.getMonth()]
+        }
+    }
+    
+    // Фиксированная ширина секундомера (иконка + "00:00" + padding)
+    property real stopwatchBadgeWidth: 70
+    
+    // Вычисляемые ширины центрального блока
+    property real centerBaseWidth: timeMetrics.advanceWidth + 10 + 5 + 10 + dateMetrics.advanceWidth + sectionPadding * 2 + 12
+    property real centerExpandedWidth: timeMetrics.advanceWidth + 10 + stopwatchBadgeWidth + 10 + dateMetrics.advanceWidth + sectionPadding * 2 + 12
 
     function toggleWallpaperMode() {
         wallpaperMode = !wallpaperMode
@@ -116,7 +141,6 @@ PanelWindow {
         Region { item: rightSectionBg }
     }
 
-    // ЛЕВЫЙ СЕКТОР
     Rectangle {
         id: leftSectionBg
         anchors.top: parent.top
@@ -140,7 +164,6 @@ PanelWindow {
         }
     }
     
-    // ЦЕНТРАЛЬНЫЙ СЕКТОР
     Rectangle {
         id: centerSectionBg
         anchors.top: parent.top
@@ -151,9 +174,8 @@ PanelWindow {
             if (root.launcherMode) return root.launcherWidth
             if (root.screenshotMode) return root.screenshotWidth
             if (root.wallpaperMode || root.themeMode) return root.expandedWidth
-            return (root.centerSectionWidth > 0 ? 
-                    root.centerSectionWidth : 
-                    (centerSection.implicitWidth + root.sectionPadding * 2 + 8))
+            // Обычный режим: зависит от секундомера
+            return root.stopwatch && root.stopwatch.running ? root.centerExpandedWidth : root.centerBaseWidth
         }
         
         height: {
@@ -169,17 +191,18 @@ PanelWindow {
         border.color: root.theme.colors.border || "#2A2A2A"
         clip: true
         
+        // ПЛАВНАЯ АНИМАЦИЯ ширины — синхронная для рамки и содержимого
         Behavior on width {
             NumberAnimation {
                 duration: 450
-                easing.type: root.anyModeActive ? Easing.OutCubic : Easing.InCubic
+                easing.type: Easing.OutCubic
             }
         }
         
         Behavior on height {
             NumberAnimation {
                 duration: 450
-                easing.type: root.anyModeActive ? Easing.OutCubic : Easing.InCubic
+                easing.type: Easing.OutCubic
             }
         }
         
@@ -191,7 +214,7 @@ PanelWindow {
             theme: root.theme
             themeManager: root.themeManager
             soundManager: root.soundManager
-            stopwatch: root.stopwatch  // ← ДОБАВЛЕНО
+            stopwatch: root.stopwatch
             wallpaperMode: root.wallpaperMode
             themeMode: root.themeMode
             launcherMode: root.launcherMode
@@ -210,7 +233,6 @@ PanelWindow {
             }
         }
         
-        // Клик по центральному блоку в обычном состоянии — открыть попап времени
         MouseArea {
             anchors.fill: parent
             enabled: !root.anyModeActive
@@ -222,10 +244,8 @@ PanelWindow {
                 }
             }
         }
-        
     }
     
-    // ПРАВЫЙ СЕКТОР
     Rectangle {
         id: rightSectionBg
         anchors.top: parent.top

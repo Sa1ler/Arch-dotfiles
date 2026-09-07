@@ -12,12 +12,12 @@ Item {
     property bool themeMode: false
     property bool launcherMode: false
     property bool screenshotMode: false
-    property var stopwatch: null  // ← ДОБАВЛЕНО
+    property var stopwatch: null
     
     signal closed()
     
-    implicitHeight: clockWidget.implicitHeight
-    implicitWidth: clockWidget.implicitWidth
+    implicitHeight: 20
+    implicitWidth: 200  // фиксированное значение — теперь не важно
     
     property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode
     
@@ -84,13 +84,14 @@ Item {
             event.accepted = true
         }
 
+        // Clock заполняет всё доступное пространство (а не центрируется)
         Clock {
             id: clockWidget
-            anchors.centerIn: parent
+            anchors.fill: parent
             
             theme: root.theme
             soundManager: root.soundManager
-            stopwatch: root.stopwatch  // ← ДОБАВЛЕНО
+            stopwatch: root.stopwatch
             
             opacity: root.anyModeActive ? 0 : 1
             scale: root.anyModeActive ? 0.9 : 1
@@ -102,18 +103,12 @@ Item {
         WallpaperPicker {
             id: wallpaperPicker
             anchors.fill: parent
-            
             theme: root.theme
             soundManager: root.soundManager
             active: root.wallpaperMode
             enabled: root.wallpaperMode
-            
-            onClose: {
-                root.closed()
-            }
-            
+            onClose: root.closed()
             opacity: root.wallpaperMode ? 1 : 0
-            
             Behavior on opacity {
                 NumberAnimation {
                     duration: root.wallpaperMode ? 350 : 120
@@ -125,19 +120,13 @@ Item {
         ThemePicker {
             id: themePicker
             anchors.fill: parent
-            
             theme: root.theme
             themeManager: root.themeManager
             soundManager: root.soundManager
             active: root.themeMode
             enabled: root.themeMode
-            
-            onClose: {
-                root.closed()
-            }
-            
+            onClose: root.closed()
             opacity: root.themeMode ? 1 : 0
-            
             Behavior on opacity {
                 NumberAnimation {
                     duration: root.themeMode ? 350 : 120
@@ -149,18 +138,12 @@ Item {
         Launcher {
             id: launcher
             anchors.fill: parent
-            
             theme: root.theme
             soundManager: root.soundManager
             active: root.launcherMode
             enabled: root.launcherMode
-            
-            onClose: {
-                root.closed()
-            }
-            
+            onClose: root.closed()
             opacity: root.launcherMode ? 1 : 0
-            
             Behavior on opacity {
                 NumberAnimation {
                     duration: root.launcherMode ? 350 : 120
@@ -172,18 +155,12 @@ Item {
         ScreenshotMenu {
             id: screenshotMenu
             anchors.fill: parent
-            
             theme: root.theme
             soundManager: root.soundManager
             active: root.screenshotMode
             enabled: root.screenshotMode
-            
-            onClose: {
-                root.closed()
-            }
-            
+            onClose: root.closed()
             opacity: root.screenshotMode ? 1 : 0
-            
             Behavior on opacity {
                 NumberAnimation {
                     duration: root.screenshotMode ? 350 : 120
