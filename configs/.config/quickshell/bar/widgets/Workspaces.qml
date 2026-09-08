@@ -11,12 +11,14 @@ Item {
     property int currentWorkspace: 1
     property int activeIndex: 0
 
-    // Размеры капсулы
-    property real inactiveSize: 18
-    property real activeWidth: 30
-    property real capsuleHeight: 18
-    property real capsuleRadius: 10
+    property int inactiveSize: 18
+    property int activeWidth: 30
+    property int capsuleHeight: 18
+    property int capsuleRadius: 10
 
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color inactiveColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#666666"
+    
     implicitWidth: contentRow.implicitWidth
     implicitHeight: capsuleHeight
 
@@ -40,17 +42,14 @@ Item {
                 height: root.capsuleHeight
                 radius: root.capsuleRadius
 
-                color: isActive ? 
-                       (root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF") : 
-                       (root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#666")
-
-                opacity: isActive ? 1.0 : (isHovered ? 0.6 : 0.4)
+                color: isActive ? root.accentColor : root.inactiveColor
+                opacity: isActive ? 1.0 : (isHovered ? 0.7 : 0.4)
 
                 Behavior on width {
-                    NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 250; easing.type: Easing.OutQuart }
                 }
                 Behavior on opacity {
-                    NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 180; easing.type: Easing.OutQuart }
                 }
                 Behavior on color {
                     ColorAnimation { duration: 200 }
@@ -85,7 +84,6 @@ Item {
         }
     }
 
-    // Точное чтение активного стола (для special workspace и т.п.)
     Process {
         id: getWorkspace
         command: ["bash", "-c", "hyprctl activeworkspace -j"]
@@ -98,13 +96,12 @@ Item {
                         root.activeIndex = data.id - 1
                     }
                 } catch(e) {
-                    // ignore — события socket2 всё равно обновят полоску
+                    // ignore
                 }
             }
         }
     }
 
-    // Слушатель событий: обновляет полоску НАПРЯМУЮ из workspace>>
     Process {
         id: hyprListener
         command: ["bash", "-c",
@@ -113,13 +110,11 @@ Item {
         stdout: SplitParser {
             onRead: function(line) {
                 if (line.startsWith("workspace>>")) {
-                    // Событие вида "workspace>>2" — обновляем мгновенно
                     var id = parseInt(line.split(">>")[1])
                     if (!isNaN(id) && id >= 1 && id <= root.maxWorkspaces) {
                         root.currentWorkspace = id
                         root.activeIndex = id - 1
                     }
-                    getWorkspace.running = true
                 } else if (line.startsWith("focusedmon>>") ||
                            line.startsWith("createworkspace>>") ||
                            line.startsWith("destroyworkspace>>")) {
@@ -129,23 +124,45 @@ Item {
         }
     }
 
+    // === Процесс переключения с логированием ===
+    Process {
+        id: dispatchProcess
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var out = text.trim()
+                if (out.length > 0) {
+                    console.log("[hyprctl]:", out)
+                }
+            }
+        }
+        
+        stderr: StdioCollector {
+            onStreamFinished: {
+                var err = text.trim()
+                if (err.length > 0) {
+                    console.warn("[hyprctl error]:", err)
+                }
+            }
+        }
+    }
+
     Component.onCompleted: {
         getWorkspace.running = true
     }
 
-    // НОВЫЙ синтаксис Hyprland 0.55+: сокет оборачивает в return hl.dispatch(...)
-    function hyprCmd(luaDispatcher) {
-        Quickshell.execDetached(["bash", "-c",
-            "SOCK=$(ls -t /run/user/$(id -u)/hypr/*/.socket.sock 2>/dev/null | head -n1); " +
-            "[ -S \"$SOCK\" ] && printf '%s\\n' 'dispatch " + luaDispatcher + "' | socat - UNIX-CONNECT:$SOCK"])
-    }
-
+    // === ИСПРАВЛЕНО: Новый синтаксис для Hyprland 0.55+ ===
+    // Массив аргументов вместо "bash -c" — быстрее и надежнее
     function switchToWorkspace(number) {
-        hyprCmd("hl.dsp.focus({ workspace = " + number + " })")
-        root.activeIndex = number - 1
+        console.log("[Workspaces] Switching to workspace:", number)
+        dispatchProcess.command = ["hyprctl", "dispatch", `hl.dsp.focus({ workspace = ${number} })`]
+        dispatchProcess.running = true
+        root.activeIndex = number - 1  // Мгновенный отклик UI
     }
 
     function moveWindowToWorkspace(number) {
-        hyprCmd("hl.dsp.window.move({ workspace = " + number + " })")
+        console.log("[Workspaces] Moving window to workspace:", number)
+        dispatchProcess.command = ["hyprctl", "dispatch", `hl.dsp.window.move({ workspace = ${number} })`]
+        dispatchProcess.running = true
     }
 }

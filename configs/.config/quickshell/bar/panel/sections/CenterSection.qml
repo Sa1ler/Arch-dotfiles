@@ -1,5 +1,4 @@
 import QtQuick
-
 import "../../widgets"
 
 Item {
@@ -18,75 +17,51 @@ Item {
     
     signal closed()
     
-    implicitHeight: 20
-    implicitWidth: 200
-    
     property bool anyModeActive: wallpaperMode || themeMode || launcherMode || screenshotMode || timerFinishedMode
-    
-    onAnyModeActiveChanged: {
-        if (anyModeActive) {
-            focusScope.forceActiveFocus()
-        }
-    }
 
     FocusScope {
         id: focusScope
         anchors.fill: parent
-        focus: true
+        
+        // ОПТИМИЗАЦИЯ: Декларативное управление фокусом вместо forceActiveFocus()
+        focus: root.anyModeActive 
 
         Keys.onEscapePressed: function(event) {
-            if (root.launcherMode) {
-                launcher.close()
-            } else {
-                root.closed()
-            }
+            if (root.launcherMode) launcher.close()
+            else root.closed()
             event.accepted = true
         }
         
         Keys.onLeftPressed: function(event) {
-            if (root.wallpaperMode) {
-                wallpaperPicker.navigateLeft()
-            } else if (root.themeMode) {
-                themePicker.navigateLeft()
-            }
+            if (root.wallpaperMode) wallpaperPicker.navigateLeft()
+            else if (root.themeMode) themePicker.navigateLeft()
             event.accepted = true
         }
         
         Keys.onRightPressed: function(event) {
-            if (root.wallpaperMode) {
-                wallpaperPicker.navigateRight()
-            } else if (root.themeMode) {
-                themePicker.navigateRight()
-            }
+            if (root.wallpaperMode) wallpaperPicker.navigateRight()
+            else if (root.themeMode) themePicker.navigateRight()
             event.accepted = true
         }
         
         Keys.onUpPressed: function(event) {
-            if (root.launcherMode) {
-                launcher.navigateUp()
-            }
+            if (root.launcherMode) launcher.navigateUp()
             event.accepted = true
         }
         
         Keys.onDownPressed: function(event) {
-            if (root.launcherMode) {
-                launcher.navigateDown()
-            }
+            if (root.launcherMode) launcher.navigateDown()
             event.accepted = true
         }
         
         Keys.onReturnPressed: function(event) {
-            if (root.wallpaperMode) {
-                wallpaperPicker.applyCurrent()
-            } else if (root.themeMode) {
-                themePicker.applyCurrent()
-            } else if (root.launcherMode) {
-                launcher.applyCurrent()
-            }
+            if (root.wallpaperMode) wallpaperPicker.applyCurrent()
+            else if (root.themeMode) themePicker.applyCurrent()
+            else if (root.launcherMode) launcher.applyCurrent()
             event.accepted = true
         }
 
-        // Часы (заполняют всё доступное пространство)
+        // ===== ЧАСЫ =====
         Clock {
             id: clockWidget
             anchors.fill: parent
@@ -96,14 +71,16 @@ Item {
             stopwatch: root.stopwatch
             countdownTimer: root.countdownTimer
             
+            // GPU Оптимизация: Скрываем после завершения анимации исчезновения
+            visible: !root.anyModeActive || opacity > 0
             opacity: root.anyModeActive ? 0 : 1
-            scale: root.anyModeActive ? 0.9 : 1
+            scale: root.anyModeActive ? 0.95 : 1
             
-            Behavior on opacity { NumberAnimation { duration: 150 } }
-            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: root.anyModeActive ? 150 : 250; easing.type: Easing.OutQuart } }
+            Behavior on scale { NumberAnimation { duration: root.anyModeActive ? 150 : 250; easing.type: Easing.OutQuart } }
         }
         
-        // Экран завершения таймера
+        // ===== ЭКРАН ЗАВЕРШЕНИЯ ТАЙМЕРА =====
         TimerFinished {
             id: timerFinished
             anchors.fill: parent
@@ -113,20 +90,20 @@ Item {
             active: root.timerFinishedMode
             enabled: root.timerFinishedMode
             
-            onClose: {
-                root.closed()
-            }
+            onClose: root.closed()
             
+            visible: root.timerFinishedMode || opacity > 0
             opacity: root.timerFinishedMode ? 1 : 0
             
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.timerFinishedMode ? 350 : 120
-                    easing.type: Easing.OutCubic
+                    duration: root.timerFinishedMode ? 300 : 150
+                    easing.type: Easing.OutQuart
                 }
             }
         }
         
+        // ===== WALLPAPER PICKER =====
         WallpaperPicker {
             id: wallpaperPicker
             anchors.fill: parent
@@ -136,20 +113,20 @@ Item {
             active: root.wallpaperMode
             enabled: root.wallpaperMode
             
-            onClose: {
-                root.closed()
-            }
+            onClose: root.closed()
             
+            visible: root.wallpaperMode || opacity > 0
             opacity: root.wallpaperMode ? 1 : 0
             
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.wallpaperMode ? 350 : 120
-                    easing.type: Easing.OutCubic
+                    duration: root.wallpaperMode ? 300 : 150
+                    easing.type: Easing.OutQuart
                 }
             }
         }
         
+        // ===== THEME PICKER =====
         ThemePicker {
             id: themePicker
             anchors.fill: parent
@@ -160,20 +137,20 @@ Item {
             active: root.themeMode
             enabled: root.themeMode
             
-            onClose: {
-                root.closed()
-            }
+            onClose: root.closed()
             
+            visible: root.themeMode || opacity > 0
             opacity: root.themeMode ? 1 : 0
             
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.themeMode ? 350 : 120
-                    easing.type: Easing.OutCubic
+                    duration: root.themeMode ? 300 : 150
+                    easing.type: Easing.OutQuart
                 }
             }
         }
         
+        // ===== LAUNCHER =====
         Launcher {
             id: launcher
             anchors.fill: parent
@@ -183,20 +160,20 @@ Item {
             active: root.launcherMode
             enabled: root.launcherMode
             
-            onClose: {
-                root.closed()
-            }
+            onClose: root.closed()
             
+            visible: root.launcherMode || opacity > 0
             opacity: root.launcherMode ? 1 : 0
             
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.launcherMode ? 350 : 120
-                    easing.type: Easing.OutCubic
+                    duration: root.launcherMode ? 300 : 150
+                    easing.type: Easing.OutQuart
                 }
             }
         }
         
+        // ===== SCREENSHOT MENU =====
         ScreenshotMenu {
             id: screenshotMenu
             anchors.fill: parent
@@ -206,16 +183,15 @@ Item {
             active: root.screenshotMode
             enabled: root.screenshotMode
             
-            onClose: {
-                root.closed()
-            }
+            onClose: root.closed()
             
+            visible: root.screenshotMode || opacity > 0
             opacity: root.screenshotMode ? 1 : 0
             
             Behavior on opacity {
                 NumberAnimation {
-                    duration: root.screenshotMode ? 350 : 120
-                    easing.type: Easing.OutCubic
+                    duration: root.screenshotMode ? 300 : 150
+                    easing.type: Easing.OutQuart
                 }
             }
         }

@@ -6,43 +6,51 @@ Item {
     id: root
 
     property var theme: null
-    
-    property string wifiState: "off"
+    property string wifiState: "off"  // "off", "on", "connected"
     property string networkName: ""
+    
+    // === Кэш цветов темы ===
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color badgeTextColor: root.theme && root.theme.colors && root.theme.colors.textSelected ? root.theme.colors.textSelected : "#FFFFFF"
+    readonly property color offBgColor: "#3A3A3A"
+    readonly property color offTextColor: "#888888"
     
     implicitWidth: wifiCard.implicitWidth
     implicitHeight: wifiCard.implicitHeight
 
+    // === ОДИН процесс вместо двух (меньше spawn) ===
     Process {
         id: getWifiStatus
-        command: ["sh", "-c", "nmcli radio wifi 2>/dev/null"]
+        command: ["sh", "-c", "LC_ALL=C nmcli -t -f active,ssid dev wifi 2>/dev/null"]
         
         stdout: StdioCollector {
             onStreamFinished: {
-                var status = text.trim().toLowerCase()
+                var output = text.trim()
                 
-                if (status === "enabled") {
-                    getActiveNetwork.running = true
-                } else {
+                if (output.length === 0) {
+                    // nmcli не может получить данные — скорее всего wifi выключен
                     root.wifiState = "off"
                     root.networkName = ""
+                    return
                 }
-            }
-        }
-    }
-
-    Process {
-        id: getActiveNetwork
-        command: ["sh", "-c", "LC_ALL=C nmcli -t -f active,ssid dev wifi 2>/dev/null | grep -E '^(yes|\\*|да)' | head -1 | cut -d: -f2-"]
-        
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var ssid = text.trim()
                 
-                if (ssid.length > 0) {
+                // Ищем активную сеть
+                var lines = output.split("\n")
+                var activeSSID = ""
+                
+                for (var i = 0; i < lines.length; i++) {
+                    var parts = lines[i].split(":")
+                    if (parts[0] === "yes" || parts[0] === "*" || parts[0] === "да") {
+                        activeSSID = parts.slice(1).join(":").trim()
+                        break
+                    }
+                }
+                
+                if (activeSSID.length > 0) {
                     root.wifiState = "connected"
-                    root.networkName = ssid
+                    root.networkName = activeSSID
                 } else {
+                    // WiFi включен, но нет подключения
                     root.wifiState = "on"
                     root.networkName = ""
                 }
@@ -52,7 +60,7 @@ Item {
 
     Timer {
         id: wifiTimer
-        interval: 2000
+        interval: 3000  // Увеличил до 3 секунд — сети не меняются чаще
         repeat: true
         running: true
         triggeredOnStart: true
@@ -66,86 +74,50 @@ Item {
     Rectangle {
         id: wifiCard
         anchors.centerIn: parent
-        
-        // Параметры плашки
         implicitWidth: contentRow.implicitWidth + 10
         implicitHeight: 25
         radius: 8
         
-        color: {
-            if (root.wifiState === "off") {
-                // Захардкоженный серый при выключенном
-                return "#3A3A3A"
-            }
-            // connected и on — акцентный цвет
-            return root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
-        }
-        
+        color: root.wifiState === "off" ? root.offBgColor : root.accentColor
         border.width: 1
-        border.color: {
-            if (root.wifiState === "off") {
-                return Qt.rgba(1, 1, 1, 0.05)
-            }
-            return Qt.rgba(1, 1, 1, 0.2)
-        }
+        border.color: root.wifiState === "off" ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.2)
         
-        Behavior on color { ColorAnimation { duration: 250 } }
-        Behavior on border.color { ColorAnimation { duration: 250 } }
+        Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutQuart } }
+        Behavior on border.color { ColorAnimation { duration: 250; easing.type: Easing.OutQuart } }
 
         Row {
             id: contentRow
             anchors.centerIn: parent
             spacing: 6
             
-            // Иконка: перечёркнутый wifi при выключенном
+            // Иконка: одинаковый wifi, но с разной насыщенностью
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.wifiState === "off" ? "\uf05e" : "\uf1eb"  // ban / wifi
-                font.family: "JetBrainsMono Nerd Font Mono"
-                font.pixelSize: 25
-                color: {
-                    if (root.wifiState === "off") {
-                        return "#888"
-                    }
-                    return root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                        root.theme.colors.textSelected : "#FFF"
-                }
+                text: "\uf1eb"  // fa-wifi
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 28
+                color: root.wifiState === "off" ? root.offTextColor : root.badgeTextColor
+                opacity: root.wifiState === "off" ? 0.6 : 1
                 
                 Behavior on color { ColorAnimation { duration: 250 } }
+                Behavior on opacity { NumberAnimation { duration: 250 } }
             }
             
-            // Текст
+            // Текст состояния/сети
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: {
-                    if (root.wifiState === "connected") {
-                        return root.networkName
-                    }
-                    if (root.wifiState === "on") {
-                        return "On"
-                    }
+                    if (root.wifiState === "connected") return root.networkName
+                    if (root.wifiState === "on") return "On"
                     return "Off"
                 }
-                font.family: "JetBrainsMono Nerd Font Mono"
+                // JetBrains Mono для ровного текста (не Nerd Font!)
+                font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 14
-                font.bold: true
                 font.weight: Font.DemiBold
-                color: {
-                    if (root.wifiState === "off") {
-                        return "#888"
-                    }
-                    return root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                           root.theme.colors.textSelected : "#FFF"
-                }
+                color: root.wifiState === "off" ? root.offTextColor : root.badgeTextColor
                 
                 Behavior on color { ColorAnimation { duration: 250 } }
-                Behavior on text {
-                    SequentialAnimation {
-                        NumberAnimation { target: parent; property: "opacity"; to: 0; duration: 100 }
-                        PropertyAction { target: parent; property: "text" }
-                        NumberAnimation { target: parent; property: "opacity"; to: 1; duration: 150 }
-                    }
-                }
             }
         }
     }

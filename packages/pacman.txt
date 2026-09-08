@@ -73,6 +73,7 @@ thunar
 tree
 ttf-cascadia-code
 ttf-cascadia-code-nerd
+ttf-iosevka-nerd
 unzip
 uwsm
 vulkan-intel

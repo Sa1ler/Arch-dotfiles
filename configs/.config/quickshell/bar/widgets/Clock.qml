@@ -8,6 +8,11 @@ Item {
     property var stopwatch: null
     property var countdownTimer: null
     
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#888888"
+    readonly property color badgeTextColor: root.theme && root.theme.colors && root.theme.colors.textSelected ? root.theme.colors.textSelected : "#FFFFFF"
+    
     readonly property var monthNames: [
         "января", "февраля", "марта", "апреля", "мая", "июня",
         "июля", "августа", "сентября", "октября", "ноября", "декабря"
@@ -15,69 +20,53 @@ Item {
     
     property bool stopwatchRunning: root.stopwatch && root.stopwatch.running
     property bool timerRunning: root.countdownTimer && root.countdownTimer.running
-    property bool stopwatchVisible: false
-    property bool timerVisible: false
+    property bool anyTimerActive: stopwatchRunning || timerRunning
     
+    property bool stopwatchVisible: stopwatchRunning
+    property bool timerVisible: timerRunning
+    
+    property string currentTime: ""
+    property string currentDate: ""
+    
+    // === ВОЗВРАЩАЕМ расчет смещения для правильного позиционирования точки ===
     property real centerOffset: (timeText.implicitWidth - dateText.implicitWidth) / 2
     
+    Component.onCompleted: updateTime()
+    
+    function updateTime() {
+        var now = new Date()
+        currentTime = Qt.formatTime(now, "HH:mm")
+        currentDate = now.getDate() + " " + monthNames[now.getMonth()]
+    }
+    
     height: 20
-    
-    onStopwatchRunningChanged: {
-        if (stopwatchRunning) {
-            showTimer.restart()
-        } else {
-            showTimer.stop()
-            stopwatchVisible = false
-        }
-    }
-    
-    onTimerRunningChanged: {
-        if (timerRunning) {
-            showTimer2.restart()
-        } else {
-            showTimer2.stop()
-            timerVisible = false
-        }
-    }
-    
-    Timer {
-        id: showTimer
-        interval: 450
-        onTriggered: stopwatchVisible = true
-    }
-    
-    Timer {
-        id: showTimer2
-        interval: 450
-        onTriggered: timerVisible = true
-    }
 
     // Время (слева)
     Text {
         id: timeText
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        text: Qt.formatTime(new Date(), "HH:mm")
-        color: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+        text: root.currentTime
+        color: root.textColor
         font.pixelSize: 17
         font.weight: Font.Black
-        font.family: "JetBrainsMono Nerd Font Mono"
+        font.family: "JetBrains Mono"
     }
     
-    // Точка-разделитель (скрыта когда таймер или секундомер запущен)
+    // Точка-разделитель (теперь с правильным offset)
     Rectangle {
         id: dot
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: root.centerOffset
         anchors.verticalCenter: parent.verticalCenter
-        width: (stopwatchRunning || timerRunning) ? 0 : 5
+        width: root.anyTimerActive ? 0 : 5
         height: 5
         radius: 2.5
-        color: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#888"
-        opacity: (stopwatchRunning || timerRunning) ? 0 : 0.7
+        color: root.textSecondaryColor
+        opacity: root.anyTimerActive ? 0 : 0.7
         
-        Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.InOutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.InOutCubic } }
+        Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
     }
     
     // Бейдж секундомера
@@ -86,18 +75,17 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: root.centerOffset
         anchors.verticalCenter: parent.verticalCenter
-        width: stopwatchVisible ? stopwatchContent.implicitWidth + 12 : 0
+        width: root.stopwatchVisible && !root.timerVisible ? stopwatchContent.implicitWidth + 12 : 0
         height: 20
         radius: 10
-        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+        color: root.accentColor
         clip: true
+        opacity: root.stopwatchVisible && !root.timerVisible ? 1 : 0
+        scale: root.stopwatchVisible && !root.timerVisible ? 1 : 0.9
         
-        opacity: stopwatchVisible && !timerVisible ? 1 : 0
-        scale: stopwatchVisible && !timerVisible ? 1 : 0.85
-        
-        Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.InOutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+        Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
+        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
+        Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         
         Row {
             id: stopwatchContent
@@ -107,40 +95,39 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "\uf253"
-                font.family: "JetBrainsMono Nerd Font Mono"
+                font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 12
-                color: root.theme.colors.textSelected || "#FFF"
+                color: root.badgeTextColor
             }
             
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.stopwatch ? root.stopwatch.formatTime() : "00:00"
-                font.family: "JetBrainsMono Nerd Font Mono"
+                font.family: "JetBrains Mono"
                 font.pixelSize: 11
                 font.weight: Font.Black
-                color: root.theme.colors.textSelected || "#FFF"
+                color: root.badgeTextColor
             }
         }
     }
     
-    // Бейдж таймера (приоритетнее секундомера)
+    // Бейдж таймера
     Rectangle {
         id: timerBadge
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: root.centerOffset
         anchors.verticalCenter: parent.verticalCenter
-        width: timerVisible ? timerContent.implicitWidth + 12 : 0
+        width: root.timerVisible ? timerContent.implicitWidth + 12 : 0
         height: 20
         radius: 10
-        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+        color: root.accentColor
         clip: true
+        opacity: root.timerVisible ? 1 : 0
+        scale: root.timerVisible ? 1 : 0.9
         
-        opacity: timerVisible ? 1 : 0
-        scale: timerVisible ? 1 : 0.85
-        
-        Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.InOutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+        Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
+        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
+        Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         
         Row {
             id: timerContent
@@ -150,18 +137,18 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "\uf017"
-                font.family: "JetBrainsMono Nerd Font Mono"
+                font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 12
-                color: root.theme.colors.textSelected || "#FFF"
+                color: root.badgeTextColor
             }
             
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.countdownTimer ? root.countdownTimer.formatTime() : "00:00"
-                font.family: "JetBrainsMono Nerd Font Mono"
+                font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 11
                 font.weight: Font.Black
-                color: root.theme.colors.textSelected || "#FFF"
+                color: root.badgeTextColor
             }
         }
     }
@@ -171,24 +158,17 @@ Item {
         id: dateText
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text: {
-            var now = new Date()
-            return now.getDate() + " " + root.monthNames[now.getMonth()]
-        }
-        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+        text: root.currentDate
+        color: root.accentColor
         font.pixelSize: 15
         font.weight: Font.Black
-        font.family: "JetBrainsMono Nerd Font Mono"
+        font.family: "Font Awesome 6 Free Solid"
     }
     
     Timer {
         interval: 1000
         repeat: true
         running: true
-        onTriggered: {
-            var now = new Date()
-            timeText.text = Qt.formatTime(now, "HH:mm")
-            dateText.text = now.getDate() + " " + root.monthNames[now.getMonth()]
-        }
+        onTriggered: root.updateTime()
     }
 }

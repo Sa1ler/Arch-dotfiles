@@ -6,57 +6,50 @@ Item {
     id: root
 
     property var theme: null
-    
     property int batteryLevel: 100
     property bool charging: false
-    
-    // Низкий заряд: < 15% и не на зарядке
-    property bool isLowBattery: batteryLevel < 15 && !charging
+    readonly property bool isLowBattery: batteryLevel < 15 && !charging
     
     implicitWidth: batteryCard.width
     implicitHeight: batteryCard.height
 
-    // Иконка зарядки (молния)
-    property string chargingIcon: ""
-    
-    // Иконка батареи в зависимости от уровня
-    property string batteryIcon: {
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color textColor: root.theme && root.theme.colors && root.theme.colors.textSelected ? root.theme.colors.textSelected : "#FFFFFF"
+
+    readonly property string chargingIcon: ""
+    readonly property string batteryIcon: {
         if (batteryLevel <= 10) return "󰁺"
         if (batteryLevel <= 30) return "󰁼"
         if (batteryLevel <= 60) return "󰁾"
         if (batteryLevel <= 90) return "󰂀"
-        return "󰂀"
+        return "󰁿"
     }
-    
-    // Текущая иконка
-    property string currentIcon: charging ? chargingIcon : batteryIcon
+    readonly property string currentIcon: charging ? chargingIcon : batteryIcon
 
-    // Получение данных о батарее
+    // === Process для чтения батареи (работает с любым именем батареи) ===
     Process {
         id: getBattery
-        command: ["sh", "-c", "echo \"$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1) $(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1)\""]
+        command: ["sh", "-c", "cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1 && cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1"]
         
         stdout: StdioCollector {
             onStreamFinished: {
-                var output = text.trim()
-                var parts = output.split(" ")
+                var lines = text.trim().split("\n")
                 
-                if (parts.length >= 1 && parts[0].length > 0) {
-                    var level = parseInt(parts[0])
+                if (lines.length >= 1 && lines[0].length > 0) {
+                    var level = parseInt(lines[0])
                     if (!isNaN(level)) {
                         root.batteryLevel = level
                     }
                 }
                 
-                if (parts.length >= 2) {
-                    var status = parts[1].toLowerCase()
-                    root.charging = (status === "charging")
+                if (lines.length >= 2 && lines[1].length > 0) {
+                    var status = lines[1].toLowerCase()
+                    root.charging = (status === "charging" || status === "full")
                 }
             }
         }
     }
 
-    // Обновление каждые 5 секунд
     Timer {
         id: batteryTimer
         interval: 5000
@@ -70,7 +63,6 @@ Item {
         }
     }
 
-    // Анимация мигания красным при низком заряде
     SequentialAnimation {
         id: blinkAnimation
         loops: Animation.Infinite
@@ -85,33 +77,28 @@ Item {
         ColorAnimation { 
             target: batteryCard 
             property: "color" 
-            to: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+            to: root.accentColor
             duration: 500 
             easing.type: Easing.InOutQuad
         }
     }
 
-    // Запуск/остановка мигания
     onIsLowBatteryChanged: {
         if (isLowBattery) {
             blinkAnimation.start()
         } else {
             blinkAnimation.stop()
-            batteryCard.color = root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+            batteryCard.color = root.accentColor
         }
     }
 
-    // Плашка
     Rectangle {
         id: batteryCard
         anchors.centerIn: parent
-        
         width: contentRow.implicitWidth + 10
         height: 25
         radius: 8
-        
-        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
-        
+        color: root.accentColor
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.2)
 
@@ -120,26 +107,22 @@ Item {
             anchors.centerIn: parent
             spacing: 6
             
-            // Иконка батареи/зарядки
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.currentIcon
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 22
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 20
                 font.weight: Font.Black
-                color: root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                       root.theme.colors.textSelected : "#FFF"
+                color: root.textColor
             }
             
-            // Проценты
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.batteryLevel + "%"
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 14
                 font.weight: Font.ExtraBold
-                color: root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                       root.theme.colors.textSelected : "#FFF"
+                color: root.textColor
             }
         }
     }

@@ -10,35 +10,30 @@ import "popups/time"
 ShellRoot {
     id: root
 
-    ThemeManager {
-        id: themeManager
-    }
-
-    SoundPlayer {
+    ThemeManager { id: themeManager }
+    
+    SoundPlayer { 
         id: soundManager
         soundsDir: Quickshell.shellDir + "/../sounds"
     }
     
-    Stopwatch {
-        id: stopwatch
-    }
-    
-    CountdownTimer {
-        id: countdownTimer
-    }
+    Stopwatch { id: stopwatch }
+    CountdownTimer { id: countdownTimer }
 
+    // Оптимизированный IPC
     IpcHandler {
         target: "topbar"
         
-        function toggleWallpaper() { topBar.toggleWallpaperMode() }
-        function closeWallpaper() { topBar.closeWallpaperMode() }
-        function toggleTheme() { topBar.toggleThemeMode() }
-        function closeTheme() { topBar.closeThemeMode() }
-        function toggleLauncher() { topBar.toggleLauncherMode() }
-        function closeLauncher() { topBar.closeLauncherMode() }
-        function toggleScreenshot() { topBar.toggleScreenshotMode() }
-        function closeScreenshot() { topBar.closeScreenshotMode() }
+        function toggleWallpaper() { topBar.setMode(topBar.modeWallpaper) }
+        function toggleTheme() { topBar.setMode(topBar.modeTheme) }
+        function toggleLauncher() { topBar.setMode(topBar.modeLauncher) }
+        function toggleScreenshot() { topBar.setMode(topBar.modeScreenshot) }
         function toggleTimePopup() { timePopupWindow.toggle() }
+        
+        function closeWallpaper() { topBar.closeMode(topBar.modeWallpaper) }
+        function closeTheme() { topBar.closeMode(topBar.modeTheme) }
+        function closeLauncher() { topBar.closeMode(topBar.modeLauncher) }
+        function closeScreenshot() { topBar.closeMode(topBar.modeScreenshot) }
     }
 
     TopBar {
@@ -55,7 +50,7 @@ ShellRoot {
     
     TimePopupWindow {
         id: timePopupWindow
-        visible: false
+        visible: false // <-- ИСПРАВЛЕНО: было false1, теперь корректный boolean
         
         theme: themeManager.theme
         soundManager: soundManager

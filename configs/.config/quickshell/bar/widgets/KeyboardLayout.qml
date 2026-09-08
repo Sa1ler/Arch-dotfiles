@@ -8,10 +8,13 @@ Item {
     property var theme: null
     property string currentLayout: "EN"
     
+    // === Кэш цветов темы ===
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
+    
     implicitWidth: contentRow.implicitWidth
     implicitHeight: contentRow.implicitHeight
 
-    // Процесс для получения раскладки с явным указанием экземпляра
     Process {
         id: getLayout
         command: ["sh", "-c", "hyprctl devices -j 2>&1"]
@@ -20,16 +23,13 @@ Item {
             onStreamFinished: {
                 var output = text.trim()
                 
-                if (output.length === 0) {
-                    console.warn("KeyboardLayout: empty output from hyprctl")
-                    return
-                }
+                if (output.length === 0) return
                 
                 try {
                     var data = JSON.parse(output)
                     
                     if (data && data.keyboards && data.keyboards.length > 0) {
-                        // Ищем основную клавиатуру или первую
+                        // Ищем основную клавиатуру
                         var keyboard = null
                         for (var i = 0; i < data.keyboards.length; i++) {
                             if (data.keyboards[i].main) {
@@ -45,12 +45,11 @@ Item {
                         var newLayout = parseLayout(keymap)
                         
                         if (root.currentLayout !== newLayout) {
-                            console.log("KeyboardLayout: changed from", root.currentLayout, "to", newLayout, "(keymap:", keymap + ")")
                             root.currentLayout = newLayout
                         }
                     }
                 } catch(e) {
-                    console.warn("KeyboardLayout: parse error:", e, "output:", output.substring(0, 200))
+                    console.warn("KeyboardLayout: parse error:", e)
                 }
             }
         }
@@ -64,10 +63,11 @@ Item {
         }
     }
 
-    // Таймер для обновления раскладки
+    // === ОПТИМИЗАЦИЯ: Увеличен интервал с 300мс до 1000мс ===
+    // Раскладка не меняется чаще чем раз в секунду, это снижает нагрузку на CPU
     Timer {
         id: layoutTimer
-        interval: 300
+        interval: 1000
         repeat: true
         running: true
         triggeredOnStart: true
@@ -81,19 +81,12 @@ Item {
     function parseLayout(keymap) {
         var lower = keymap.toLowerCase()
         
-        if (lower.indexOf("russian") !== -1) {
-            return "RU"
-        } else if (lower.indexOf("english") !== -1 || lower.indexOf("us") !== -1) {
-            return "EN"
-        } else if (lower.indexOf("german") !== -1) {
-            return "DE"
-        } else if (lower.indexOf("french") !== -1) {
-            return "FR"
-        } else if (lower.indexOf("ukrainian") !== -1) {
-            return "UA"
-        } else if (keymap.length >= 2) {
-            return keymap.substring(0, 2).toUpperCase()
-        }
+        if (lower.indexOf("russian") !== -1) return "RU"
+        if (lower.indexOf("english") !== -1 || lower.indexOf("us") !== -1) return "EN"
+        if (lower.indexOf("german") !== -1) return "DE"
+        if (lower.indexOf("french") !== -1) return "FR"
+        if (lower.indexOf("ukrainian") !== -1) return "UA"
+        if (keymap.length >= 2) return keymap.substring(0, 2).toUpperCase()
         
         return "EN"
     }
@@ -107,9 +100,9 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "\uf11c"
-            font.family: "JetBrainsMono Nerd Font Mono"
-            font.pixelSize: 25
-            color: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAA"
+            font.family: "Font Awesome 6 Free Solid"
+            font.pixelSize: 20
+            color: root.textSecondaryColor
         }
         
         // Надпись раскладки
@@ -117,10 +110,10 @@ Item {
             id: layoutText
             anchors.verticalCenter: parent.verticalCenter
             text: root.currentLayout
-            font.family: "JetBrainsMono Nerd Font Mono"
-            font.pixelSize: 13
+            font.family: "Font Awesome 6 Free Solid"
+            font.pixelSize: 11
             font.bold: true
-            color: root.theme && root.theme.colors ? root.theme.colors.text : "#FFF"
+            color: root.textColor
             
             Behavior on text {
                 SequentialAnimation {

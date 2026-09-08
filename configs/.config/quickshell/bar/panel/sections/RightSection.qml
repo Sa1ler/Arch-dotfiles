@@ -1,5 +1,4 @@
 import QtQuick
-
 import "../../widgets"
 
 Item {
@@ -16,32 +15,9 @@ Item {
         spacing: 8
         anchors.verticalCenter: parent.verticalCenter
         
-        // Индикатор раскладки клавиатуры
-        KeyboardLayout {
-            id: keyboardLayout
-            anchors.verticalCenter: parent.verticalCenter
-            theme: root.theme
-        }
-        
-        // Индикатор WiFi
-        WifiIndicator {
-            id: wifiIndicator
-            anchors.verticalCenter: parent.verticalCenter
-            theme: root.theme
-        }
-        
-        // Индикатор громкости
-        VolumeIndicator {
-            id: volumeIndicator
-            anchors.verticalCenter: parent.verticalCenter
-            theme: root.theme
-        }
-        
-        // Индикатор батареи
-        BatteryIndicator {
-            id: batteryIndicator
-            anchors.verticalCenter: parent.verticalCenter
-            theme: root.theme
-        }
+        KeyboardLayout { anchors.verticalCenter: parent.verticalCenter; theme: root.theme }
+        WifiIndicator { anchors.verticalCenter: parent.verticalCenter; theme: root.theme }
+        VolumeIndicator { anchors.verticalCenter: parent.verticalCenter; theme: root.theme }
+        BatteryIndicator { anchors.verticalCenter: parent.verticalCenter; theme: root.theme }
     }
 }

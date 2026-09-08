@@ -6,11 +6,12 @@ Item {
     id: root
 
     property var theme: null
-    
     property int volume: 0
     property bool isMuted: true
+    readonly property bool showPercentage: !isMuted && volume > 0
     
-    property bool showPercentage: !isMuted && volume > 0
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color textColor: root.theme && root.theme.colors && root.theme.colors.textSelected ? root.theme.colors.textSelected : "#FFFFFF"
     
     implicitWidth: volumeCard.width
     implicitHeight: volumeCard.height
@@ -45,7 +46,9 @@ Item {
         stdout: SplitParser {
             onRead: function(line) {
                 if (line.indexOf("sink") !== -1 || line.indexOf("server") !== -1) {
-                    getVolume.running = true
+                    if (!getVolume.running) {
+                        getVolume.running = true
+                    }
                 }
             }
         }
@@ -68,68 +71,74 @@ Item {
         id: volumeCard
         anchors.centerIn: parent
         
-        // УМЕНЬШЕНЫЕ размеры
-        property real collapsedWidth: 32   // Только иконка (было 35)
-        property real expandedWidth: 60    // Иконка + проценты (было 80)
+        property int collapsedWidth: volumeIcon.implicitWidth + 20
+        property int expandedWidth: volumeIcon.implicitWidth + percentText.implicitWidth + 26
         
         width: root.showPercentage ? expandedWidth : collapsedWidth
         height: 25
         radius: 8
-        
-        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
-        
+        color: root.accentColor
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.2)
+        clip: true
         
         Behavior on width { 
             NumberAnimation { 
                 duration: 250 
-                easing.type: Easing.OutCubic 
+                easing.type: Easing.OutQuart 
             } 
         }
 
-        Row {
-            id: contentRow
-            anchors.centerIn: parent
-            spacing: 6
+        Text {
+            id: volumeIcon
+            anchors.verticalCenter: parent.verticalCenter
             
-            // Иконка громкости
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: {
-                    if (!root.showPercentage) return "\uf026"
-                    if (root.volume > 50) return "\uf028"
-                    return "\uf027"
+            x: root.showPercentage ? 10 : (parent.width - implicitWidth) / 2
+            
+            text: {
+                if (root.isMuted) return "\uf026"  // volume-off (пустой динамик)
+                if (root.volume === 0) return "\uf026"  // volume-off
+                if (root.volume > 50) return "\uf028"  // volume-high
+                return "\uf027"  // volume-low
+            }
+            font.family: "Font Awesome 6 Free Solid"
+            font.pixelSize: 28
+            color: root.textColor
+            
+            Behavior on x {
+                NumberAnimation {
+                    duration: 250
+                    easing.type: Easing.OutQuart
                 }
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 23
-                font.weight: Font.Black
-                color: root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                       root.theme.colors.textSelected : "#FFF"
+            }
+        }
+        
+        Text {
+            id: percentText
+            anchors.verticalCenter: parent.verticalCenter
+            
+            x: root.showPercentage ? (volumeIcon.x + volumeIcon.width + 6) : parent.width
+            
+            text: root.volume + "%"
+            font.family: "Font Awesome 6 Free Solid"
+            font.pixelSize: 14
+            font.weight: Font.ExtraBold
+            color: root.textColor
+            
+            opacity: root.showPercentage ? 1 : 0
+            
+            Behavior on x {
+                NumberAnimation {
+                    duration: 250
+                    easing.type: Easing.OutQuart
+                }
             }
             
-            // Проценты (ИСПРАВЛЕНО: ширина 0 при скрытии для центрирования иконки)
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.volume + "%"
-                font.family: "JetBrainsMono Nerd Font"
-                font.pixelSize: 14
-                font.weight: Font.ExtraBold
-                color: root.theme && root.theme.colors && root.theme.colors.textSelected ? 
-                       root.theme.colors.textSelected : "#FFF"
-                
-                // Ширина 0 при скрытии — иконка центрируется
-                width: root.showPercentage ? implicitWidth : 0
-                
-                opacity: root.showPercentage ? 1 : 0
-                
-                // Задержка перед появлением
-                Behavior on opacity { 
-                    SequentialAnimation {
-                        PauseAnimation { duration: root.showPercentage ? 150 : 0 }
-                        NumberAnimation { duration: 150 }
-                    }
-                }
+            Behavior on opacity { 
+                NumberAnimation { 
+                    duration: 200
+                    easing.type: Easing.OutQuart
+                } 
             }
         }
     }
