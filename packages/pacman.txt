@@ -33,6 +33,7 @@ libva-intel-driver
 linux
 linux-firmware
 meson
+micro
 nano
 neovim
 network-manager-applet
