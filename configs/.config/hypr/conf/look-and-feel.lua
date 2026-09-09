@@ -162,7 +162,7 @@ hl.animation({
 hl.animation({ 
     leaf = "windowsOut",
     enabled = true, 
-    speed = 5, 
+    speed = 8, 
     bezier = "dissolve" 
 })
 

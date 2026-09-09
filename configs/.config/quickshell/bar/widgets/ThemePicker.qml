@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 
@@ -18,7 +19,18 @@ Item {
     readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
     readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
     
+    readonly property real glassOpacity: 0.92
+    
     signal close()
+
+    // === Анимация появления ===
+    opacity: active ? 1 : 0
+    scale: active ? 1 : 0.92
+    y: active ? 0 : -25
+    
+    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
+    Behavior on y { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
 
     Process {
         id: loadThemes
@@ -60,16 +72,38 @@ Item {
         }
     }
 
+    // === Фон ===
+    Rectangle {
+        anchors.fill: parent
+        radius: 20
+        color: Qt.rgba(surfaceColor.r, surfaceColor.g, surfaceColor.b, glassOpacity)
+        
+        // Тонкий внутренний бордер
+        Rectangle {
+            anchors.fill: parent
+            radius: 20
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.05)
+            color: "transparent"
+        }
+    }
+
+    // === Заголовок ===
     Text {
         id: title
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 14
+        anchors.topMargin: 26
         text: "Themes"
         color: root.textColor
-        font.pixelSize: 17
-        font.bold: true
-        opacity: 0.9
+        font.pixelSize: 16
+        font.weight: Font.DemiBold
+        font.family: "CaskaydiaCove Nerd Font"
+        
+        opacity: active ? 1 : 0
+        y: active ? 0 : -10
+        Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
     }
 
     PathView {
@@ -78,24 +112,24 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: 8
-        anchors.bottomMargin: 40
-        anchors.leftMargin: 70
-        anchors.rightMargin: 70
+        anchors.topMargin: 22
+        anchors.bottomMargin: 58
+        anchors.leftMargin: 80
+        anchors.rightMargin: 80
         
         clip: true
         model: root.themesList
         pathItemCount: 5
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: 250
+        highlightMoveDuration: 420
         snapMode: PathView.SnapToItem
         
         path: Path {
-            startX: -pathView.width * 0.3
+            startX: -pathView.width * 0.35
             startY: pathView.height / 2
             
-            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemScale"; value: 0.6 }
             PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
             
@@ -105,19 +139,20 @@ Item {
             PathAttribute { name: "itemOpacity"; value: 1.0 }
             PathAttribute { name: "itemZ"; value: 10 }
             
-            PathLine { x: pathView.width * 1.3; y: pathView.height / 2 }
+            PathLine { x: pathView.width * 1.35; y: pathView.height / 2 }
             
-            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemScale"; value: 0.6 }
             PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
         }
         
         delegate: Item {
             id: delegateItem
-            width: pathView.width * 0.42
-            height: pathView.height * 0.85
+            width: pathView.width * 0.38
+            height: pathView.height * 0.82
             
             property bool isCurrent: PathView.isCurrentItem
+            property bool isHovered: cardMouse.containsMouse
             
             property var themeData: {
                 if (!root.themeManager || !root.themeManager.themes) return null
@@ -134,179 +169,216 @@ Item {
             property color tAccentColor: themeData && themeData.colors ? themeData.colors.accent : "#5B9BFF"
             property color tTextColor: themeData && themeData.colors ? themeData.colors.text : "#FFFFFF"
             property color tTextSecColor: themeData && themeData.colors ? themeData.colors.textSecondary : "#AAAAAA"
-            property color tTextSelColor: themeData && themeData.colors ? themeData.colors.textSelected : "#FFFFFF"
             property string themeName: themeData && themeData.name ? themeData.name : modelData
-            property bool isCurrentTheme: root.themeManager && root.themeManager.currentTheme === modelData
             
-            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.55
+            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.6
             opacity: PathView.itemOpacity !== undefined ? PathView.itemOpacity : 0.35
             z: PathView.itemZ !== undefined ? PathView.itemZ : 0
+            
+            // === Лёгкий параллакс при наведении ===
+            rotation: isHovered && !isCurrent ? (cardMouse.mouseX - width/2) * 0.02 : 0
+            Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             
             Rectangle {
                 id: card
                 anchors.fill: parent
-                radius: 16
+                radius: 18
                 color: surfColor
-                border.width: isCurrent ? 2 : 1
-                border.color: isCurrent ? tAccentColor : Qt.rgba(1, 1, 1, 0.15)
+                border.width: isCurrent ? 2 : 0
+                border.color: tAccentColor
+                clip: true
                 
-                Behavior on border.width { NumberAnimation { duration: 180 } }
-                Behavior on border.color { ColorAnimation { duration: 180 } }
+                Behavior on border.width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on border.color { ColorAnimation { duration: 220; easing.type: Easing.OutCubic } }
                 
-                // Превью темы
+                // === Эффект "дыхания" для активной карточки ===
+                scale: isCurrent ? 1.0 : 1.0
+                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.InOutSine } }
+                
+                SequentialAnimation on scale {
+                    running: isCurrent && root.active
+                    loops: Animation.Infinite
+                    
+                    NumberAnimation { from: 1.0; to: 1.015; duration: 1800; easing.type: Easing.InOutSine }
+                    NumberAnimation { from: 1.015; to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
+                }
+                
+                // === Превью ===
                 Rectangle {
                     id: previewArea
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.topMargin: 12
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    height: parent.height * 0.46
-                    radius: 10
+                    anchors.margins: 10
+                    height: parent.height * 0.52
+                    radius: 12
                     color: bgColor
                     clip: true
-                    border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.1)
 
-                    // Мини топбар
+                    // Верхняя панель
                     Rectangle {
                         anchors.top: parent.top
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        height: 20
+                        height: 26
                         color: surfColor
 
                         Row {
                             anchors.left: parent.left
-                            anchors.leftMargin: 6
+                            anchors.leftMargin: 10
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 4
+                            spacing: 5
 
                             Repeater {
                                 model: 3
                                 delegate: Rectangle {
-                                    width: 6
-                                    height: 6
-                                    radius: 3
-                                    color: index === 0 ? tAccentColor : Qt.rgba(1, 1, 1, 0.25)
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    color: index === 0 ? tAccentColor : Qt.rgba(1, 1, 1, 0.15)
+                                    
+                                    // Каскадное появление
+                                    opacity: 0
+                                    scale: 0.5
+                                    
+                                    Component.onCompleted: {
+                                        appearAnimation.start()
+                                    }
+                                    
+                                    ParallelAnimation {
+                                        id: appearAnimation
+                                        
+                                        NumberAnimation { 
+                                            target: parent
+                                            property: "opacity"
+                                            to: 1
+                                            duration: 300
+                                            easing.type: Easing.OutCubic
+                                        }
+                                        
+                                        NumberAnimation { 
+                                            target: parent
+                                            property: "scale"
+                                            to: 1
+                                            duration: 350
+                                            easing.type: Easing.OutBack
+                                            easing.overshoot: 1.5
+                                        }
+                                    }
                                 }
                             }
                         }
-
-                        Text {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 6
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "12:00"
-                            color: tTextColor
-                            font.pixelSize: 8
-                            font.bold: true
-                            font.family: "JetBrains Mono"
-                        }
                     }
 
+                    // Контент превью
                     Column {
-                        anchors.top: parent.bottom
-                        anchors.topMargin: -parent.height + 26
+                        anchors.top: parent.top
+                        anchors.topMargin: 38
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.margins: 9
-                        spacing: 5
+                        anchors.margins: 12
+                        spacing: 8
 
                         Rectangle {
-                            width: parent.width * 0.72
-                            height: 8
-                            radius: 4
+                            width: parent.width * 0.7
+                            height: 10
+                            radius: 5
                             color: tTextColor
                             opacity: 0.9
                         }
 
                         Rectangle {
-                            width: parent.width * 0.52
-                            height: 6
-                            radius: 3
+                            width: parent.width * 0.5
+                            height: 8
+                            radius: 4
                             color: tTextSecColor
-                            opacity: 0.7
+                            opacity: 0.5
                         }
 
+                        // === Кнопка с микроанимацией ===
                         Rectangle {
-                            width: 44
-                            height: 15
-                            radius: 7.5
+                            id: buttonPreview
+                            width: 60
+                            height: 22
+                            radius: 11
                             color: tAccentColor
-
+                            
+                            // Лёгкая пульсация
+                            scale: 1.0
+                            SequentialAnimation on scale {
+                                running: isCurrent && root.active
+                                loops: Animation.Infinite
+                                
+                                NumberAnimation { from: 1.0; to: 1.05; duration: 1200; easing.type: Easing.InOutSine }
+                                NumberAnimation { from: 1.05; to: 1.0; duration: 1200; easing.type: Easing.InOutSine }
+                            }
+                            
                             Text {
                                 anchors.centerIn: parent
                                 text: "Button"
-                                color: tTextSelColor
-                                font.pixelSize: 7
-                                font.bold: true
-                                font.family: "JetBrains Mono"
+                                color: "#000000"
+                                font.pixelSize: 10
+                                font.weight: Font.DemiBold
                             }
                         }
                     }
+                    
+                    // Акцентная полоска внизу превью
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: 3
+                        color: tAccentColor
+                        opacity: 0.8
+                    }
                 }
 
-                // Название темы
+                // === Название ===
                 Text {
                     id: themeNameText
                     anchors.top: previewArea.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.topMargin: 8
+                    anchors.topMargin: 12
                     text: themeName
                     color: tTextColor
                     font.pixelSize: 13
-                    font.bold: true
+                    font.weight: Font.DemiBold
                     font.family: "JetBrains Mono"
+                    
+                    // Лёгкое появление
+                    opacity: isCurrent ? 1 : 0.7
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
                 }
 
-                // Цветовая палитра
+                // === Палитра ===
+                // === Палитра (привязана к названию) ===
                 Row {
                     anchors.top: themeNameText.bottom
-                    anchors.topMargin: 5
+                    anchors.topMargin: 3
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 5
+                    spacing: 8
 
                     Repeater {
                         model: themeData && themeData.colors ? 
-                               [bgColor, surfColor, tAccentColor, tTextColor] : []
+                            [bgColor, surfColor, tAccentColor, tTextColor] : []
                         delegate: Rectangle {
-                            width: 12
-                            height: 12
-                            radius: 6
+                            width: 14
+                            height: 14
+                            radius: 7
                             color: modelData
                             border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.2)
+                            border.color: Qt.rgba(1, 1, 1, 0.12)
+                            
+                            scale: isHovered ? 1.1 : 1.0
+                            Behavior on scale { 
+                                NumberAnimation { 
+                                    duration: 200
+                                    easing.type: Easing.OutBack
+                                    easing.overshoot: 1.3
+                                } 
+                            }
                         }
-                    }
-                }
-
-                // Плашка статуса
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: 10
-                    width: currentLabel.width + 20
-                    height: 22
-                    radius: 11
-                    color: isCurrentTheme ? tAccentColor : Qt.rgba(0, 0, 0, 0.4)
-                    border.width: isCurrentTheme ? 0 : 1
-                    border.color: Qt.rgba(1, 1, 1, 0.15)
-                    opacity: isCurrent ? 1 : 0
-                    scale: isCurrent ? 1 : 0.9
-                    
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
-                    Behavior on scale { NumberAnimation { duration: 200 } }
-                    
-                    Text {
-                        id: currentLabel
-                        anchors.centerIn: parent
-                        text: isCurrentTheme ? "✓ Current" : "↵ Apply"
-                        color: isCurrentTheme ? tTextSelColor : "#FFFFFF"
-                        font.pixelSize: 10
-                        font.bold: true
-                        font.family: "JetBrains Mono"
                     }
                 }
                 
@@ -315,6 +387,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    
                     onClicked: {
                         if (isCurrent) {
                             Quickshell.execDetached(["qs", "-c", "themepicker", "ipc", "call", "themepicker", "applyTheme", modelData])
@@ -322,6 +395,12 @@ Item {
                             root.close()
                         } else {
                             pathView.currentIndex = index
+                        }
+                    }
+                    
+                    onPressedChanged: {
+                        if (isCurrent) {
+                            card.scale = pressed ? 0.98 : 1.0
                         }
                     }
                 }
@@ -343,10 +422,10 @@ Item {
         anchors.left: parent.left
         anchors.top: pathView.top
         anchors.bottom: pathView.bottom
-        width: 70
+        width: 80
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: root.surfaceColor }
+            GradientStop { position: 0.0; color: surfaceColor }
             GradientStop { position: 1.0; color: "transparent" }
         }
     }
@@ -355,93 +434,99 @@ Item {
         anchors.right: parent.right
         anchors.top: pathView.top
         anchors.bottom: pathView.bottom
-        width: 70
+        width: 80
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 1.0; color: root.surfaceColor }
+            GradientStop { position: 1.0; color: surfaceColor }
         }
     }
 
-    // Стрелка влево
-    Rectangle {
+    // === Стрелка влево с движением ===
+    Text {
+        id: leftArrow
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 12
-        width: 36
-        height: 36
-        radius: 18
-        color: leftMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.1)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        anchors.leftMargin: 28
+        text: "\uf060"
+        color: root.textColor
+        font.pixelSize: 22
+        font.family: "CaskaydiaCove Nerd Font"
+        opacity: leftMouse.containsMouse ? 1 : 0.4
+        x: leftMouse.containsMouse ? -3 : 0
+        scale: leftMouse.pressed ? 0.9 : 1.0
         
-        Text {
-            anchors.centerIn: parent
-            text: "‹"
-            color: root.textColor
-            font.pixelSize: 28
-            font.bold: true
-        }
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120 } }
         
         MouseArea {
             id: leftMouse
             anchors.fill: parent
+            anchors.margins: -12
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: pathView.decrementCurrentIndex()
         }
     }
 
-    // Стрелка вправо
-    Rectangle {
+    // === Стрелка вправо с движением ===
+    Text {
+        id: rightArrow
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.rightMargin: 12
-        width: 36
-        height: 36
-        radius: 18
-        color: rightMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.1)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        anchors.rightMargin: 28
+        text: "\uf061"
+        color: root.textColor
+        font.pixelSize: 22
+        font.family: "CaskaydiaCove Nerd Font"
+        opacity: rightMouse.containsMouse ? 1 : 0.4
+        x: rightMouse.containsMouse ? 3 : 0
+        scale: rightMouse.pressed ? 0.9 : 1.0
         
-        Text {
-            anchors.centerIn: parent
-            text: "›"
-            color: root.textColor
-            font.pixelSize: 28
-            font.bold: true
-        }
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120 } }
         
         MouseArea {
             id: rightMouse
             anchors.fill: parent
+            anchors.margins: -12
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: pathView.incrementCurrentIndex()
         }
     }
 
-    // Индикаторы
+    // === Индикаторы ===
     Row {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 14
+        anchors.bottomMargin: 26
         spacing: 8
         
+        opacity: active ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 320 } }
+        
         Repeater {
-            model: Math.min(root.themesList.length, 15)
+            model: Math.min(root.themesList.length, 10)
             delegate: Rectangle {
                 property bool isActive: index === root.currentIndex
-                width: isActive ? 22 : 6
+                width: isActive ? 18 : 6
                 height: 6
                 radius: 3
-                color: isActive ? root.accentColor : root.textSecondaryColor
-                opacity: isActive ? 1 : 0.4
-                Behavior on width { NumberAnimation { duration: 280; easing.type: Easing.OutQuart } }
-                Behavior on opacity { NumberAnimation { duration: 250 } }
-                Behavior on color { ColorAnimation { duration: 200 } }
+                color: isActive ? root.accentColor : Qt.rgba(1, 1, 1, 0.25)
+                
+                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
+                Behavior on color { ColorAnimation { duration: 260 } }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: pathView.currentIndex = index
+                }
             }
         }
     }

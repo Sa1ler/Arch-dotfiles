@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 
@@ -19,7 +18,17 @@ Item {
     readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
     readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
     
+    readonly property real glassOpacity: 0.92
+    
     signal close()
+
+    opacity: active ? 1 : 0
+    scale: active ? 1 : 0.92
+    y: active ? 0 : -25
+    
+    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
+    Behavior on y { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
 
     Process {
         id: loadWallpapers
@@ -43,16 +52,35 @@ Item {
         }
     }
 
+    Rectangle {
+        anchors.fill: parent
+        radius: 20
+        color: Qt.rgba(surfaceColor.r, surfaceColor.g, surfaceColor.b, glassOpacity)
+        
+        Rectangle {
+            anchors.fill: parent
+            radius: 20
+            border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.05)
+            color: "transparent"
+        }
+    }
+
     Text {
         id: title
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 14
+        anchors.topMargin: 26
         text: "Wallpapers"
         color: root.textColor
-        font.pixelSize: 17
-        font.bold: true
-        opacity: 0.9
+        font.pixelSize: 16
+        font.weight: Font.DemiBold
+        font.family: "CaskaydiaCove Nerd Font"
+        
+        opacity: active ? 1 : 0
+        y: active ? 0 : -10
+        Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
     }
 
     PathView {
@@ -61,8 +89,8 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: 8
-        anchors.bottomMargin: 40
+        anchors.topMargin: 20
+        anchors.bottomMargin: 56
         anchors.leftMargin: 70
         anchors.rightMargin: 70
         
@@ -71,14 +99,14 @@ Item {
         pathItemCount: 5
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: 250
+        highlightMoveDuration: 420
         snapMode: PathView.SnapToItem
         
         path: Path {
-            startX: -pathView.width * 0.3
+            startX: -pathView.width * 0.4
             startY: pathView.height / 2
             
-            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemScale"; value: 0.6 }
             PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
             
@@ -88,40 +116,48 @@ Item {
             PathAttribute { name: "itemOpacity"; value: 1.0 }
             PathAttribute { name: "itemZ"; value: 10 }
             
-            PathLine { x: pathView.width * 1.3; y: pathView.height / 2 }
+            PathLine { x: pathView.width * 1.4; y: pathView.height / 2 }
             
-            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemScale"; value: 0.6 }
             PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
         }
         
         delegate: Item {
             id: delegateItem
-            // === ИЗМЕНЕНО: Прямоугольная карточка (шире и ниже) ===
-            width: pathView.width * 0.63
-            height: pathView.height * 0.90
+            width: pathView.width * 0.62
+            height: pathView.height * 0.92
             
             property bool isCurrent: PathView.isCurrentItem
+            property bool isHovered: cardMouse.containsMouse
             
-            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.55
+            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.6
             opacity: PathView.itemOpacity !== undefined ? PathView.itemOpacity : 0.35
             z: PathView.itemZ !== undefined ? PathView.itemZ : 0
+            
+            rotation: isHovered && !isCurrent ? (cardMouse.mouseX - width/2) * 0.02 : 0
+            Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             
             Rectangle {
                 id: card
                 anchors.fill: parent
-                radius: 16
+                radius: 18
                 color: "#2A2A35"
                 border.width: isCurrent ? 2 : 1
-                border.color: isCurrent ? root.accentColor : Qt.rgba(1, 1, 1, 0.15)
+                border.color: isCurrent ? root.accentColor : Qt.rgba(1, 1, 1, 0.1)
+                clip: true
                 
-                Behavior on border.width { NumberAnimation { duration: 180 } }
-                Behavior on border.color { ColorAnimation { duration: 180 } }
+                Behavior on border.width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on border.color { ColorAnimation { duration: 220; easing.type: Easing.OutCubic } }
                 
-                Item {
+                // Контейнер изображения
+                Rectangle {
                     id: imageContainer
                     anchors.fill: parent
-                    anchors.margins: 2
+                    anchors.margins: 4
+                    radius: 14
+                    clip: true
+                    color: surfaceColor
                     
                     Image {
                         id: wallpaperImage
@@ -134,19 +170,30 @@ Item {
                         sourceSize.width: delegateItem.width
                         sourceSize.height: delegateItem.height
                         
+                        property bool loadFailed: false
+                        
                         onStatusChanged: {
-                            if (status === Image.Error) {
-                                console.warn("[WallpaperPicker] Failed to load:", source)
+                            if (status === Image.Error || status === Image.Null) {
+                                loadFailed = true
+                            } else if (status === Image.Ready) {
+                                loadFailed = false
                             }
                         }
                     }
                     
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: Rectangle {
-                            width: imageContainer.width
-                            height: imageContainer.height
-                            radius: 14
+                    // Fallback при ошибке
+                    Rectangle {
+                        anchors.fill: parent
+                        color: surfaceColor
+                        visible: wallpaperImage.loadFailed
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: ""
+                            font.pixelSize: 48
+                            color: root.textSecondaryColor
+                            font.family: "CaskaydiaCove Nerd Font"
+                            opacity: 0.4
                         }
                     }
                     
@@ -155,20 +202,50 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        height: 44
+                        height: 52
                         
                         gradient: Gradient {
                             GradientStop { position: 0.0; color: "transparent" }
-                            GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.5) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.85) }
+                            GradientStop { position: 0.3; color: Qt.rgba(0, 0, 0, 0.25) }
+                            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.88) }
+                        }
+                        
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 26
+                            height: 26
+                            radius: 13
+                            color: root.accentColor
+                            opacity: isCurrent ? 1 : 0
+                            scale: isCurrent ? 1 : 0.5
+                            
+                            Behavior on opacity { NumberAnimation { duration: 220 } }
+                            Behavior on scale { 
+                                NumberAnimation { 
+                                    duration: 280
+                                    easing.type: Easing.OutBack
+                                    easing.overshoot: 1.5
+                                } 
+                            }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "\uf00c"
+                                color: "#000000"
+                                font.pixelSize: 14
+                                font.weight: Font.DemiBold
+                                font.family: "CaskaydiaCove Nerd Font"
+                            }
                         }
                         
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
+                            anchors.leftMargin: isCurrent ? 46 : 14
+                            anchors.rightMargin: 14
                             text: {
                                 var name = modelData
                                 var lastSlash = name.lastIndexOf('/')
@@ -176,13 +253,29 @@ Item {
                                 return name
                             }
                             color: "#FFFFFF"
-                            font.pixelSize: 12
-                            font.bold: true
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
                             font.family: "JetBrains Mono"
                             elide: Text.ElideRight
-                            opacity: isCurrent ? 1 : 0.5
-                            Behavior on opacity { NumberAnimation { duration: 180 } }
+                            opacity: isCurrent ? 1 : (isHovered ? 0.9 : 0.6)
+                            
+                            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            Behavior on anchors.leftMargin { 
+                                NumberAnimation { 
+                                    duration: 280
+                                    easing.type: Easing.OutBack
+                                    easing.overshoot: 1.2
+                                } 
+                            }
                         }
+                    }
+                    
+                    // Hover overlay
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Qt.rgba(0, 0, 0, 0.15)
+                        opacity: isHovered && !isCurrent ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 220 } }
                     }
                 }
                 
@@ -191,6 +284,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    
                     onClicked: {
                         if (isCurrent) {
                             var fileName = modelData
@@ -201,6 +295,12 @@ Item {
                             root.close()
                         } else {
                             pathView.currentIndex = index
+                        }
+                    }
+                    
+                    onPressedChanged: {
+                        if (isCurrent) {
+                            card.scale = pressed ? 0.98 : 1.0
                         }
                     }
                 }
@@ -217,7 +317,6 @@ Item {
         }
     }
 
-    // Градиенты по краям
     Rectangle {
         anchors.left: parent.left
         anchors.top: pathView.top
@@ -225,7 +324,7 @@ Item {
         width: 70
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: root.surfaceColor }
+            GradientStop { position: 0.0; color: surfaceColor }
             GradientStop { position: 1.0; color: "transparent" }
         }
     }
@@ -238,89 +337,92 @@ Item {
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 1.0; color: root.surfaceColor }
+            GradientStop { position: 1.0; color: surfaceColor }
         }
     }
 
-    // Стрелка влево
-    Rectangle {
+    Text {
+        id: leftArrow
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 12
-        width: 36
-        height: 36
-        radius: 18
-        color: leftMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.1)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        anchors.leftMargin: 28
+        text: "\uf060"
+        color: root.textColor
+        font.pixelSize: 22
+        font.family: "CaskaydiaCove Nerd Font"
+        opacity: leftMouse.containsMouse ? 1 : 0.4
+        x: leftMouse.containsMouse ? -3 : 0
+        scale: leftMouse.pressed ? 0.9 : 1.0
         
-        Text {
-            anchors.centerIn: parent
-            text: "‹"
-            color: root.textColor
-            font.pixelSize: 28
-            font.bold: true
-        }
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120 } }
         
         MouseArea {
             id: leftMouse
             anchors.fill: parent
+            anchors.margins: -12
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: pathView.decrementCurrentIndex()
         }
     }
 
-    // Стрелка вправо
-    Rectangle {
+    Text {
+        id: rightArrow
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.rightMargin: 12
-        width: 36
-        height: 36
-        radius: 18
-        color: rightMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.1)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        anchors.rightMargin: 28
+        text: "\uf061"
+        color: root.textColor
+        font.pixelSize: 22
+        font.family: "CaskaydiaCove Nerd Font"
+        opacity: rightMouse.containsMouse ? 1 : 0.4
+        x: rightMouse.containsMouse ? 3 : 0
+        scale: rightMouse.pressed ? 0.9 : 1.0
         
-        Text {
-            anchors.centerIn: parent
-            text: "›"
-            color: root.textColor
-            font.pixelSize: 28
-            font.bold: true
-        }
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120 } }
         
         MouseArea {
             id: rightMouse
             anchors.fill: parent
+            anchors.margins: -12
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: pathView.incrementCurrentIndex()
         }
     }
 
-    // Индикаторы
     Row {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 14
+        anchors.bottomMargin: 26
         spacing: 8
         
+        opacity: active ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 320 } }
+        
         Repeater {
-            model: Math.min(root.wallpaperList.length, 15)
+            model: Math.min(root.wallpaperList.length, 10)
             delegate: Rectangle {
                 property bool isActive: index === root.currentIndex
-                width: isActive ? 22 : 6
+                width: isActive ? 18 : 6
                 height: 6
                 radius: 3
-                color: isActive ? root.accentColor : root.textSecondaryColor
-                opacity: isActive ? 1 : 0.4
-                Behavior on width { NumberAnimation { duration: 280; easing.type: Easing.OutQuart } }
-                Behavior on opacity { NumberAnimation { duration: 250 } }
-                Behavior on color { ColorAnimation { duration: 200 } }
+                color: isActive ? root.accentColor : Qt.rgba(1, 1, 1, 0.25)
+                
+                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
+                Behavior on color { ColorAnimation { duration: 260 } }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: pathView.currentIndex = index
+                }
             }
         }
     }

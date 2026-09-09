@@ -6,6 +6,7 @@ if status is-interactive
     abbr -a gct "git commit -m"
     abbr -a gps "git push"
     abbr -a ga "git add"
+    abbr -a syns "cd dotfiles && ./sync.sh"
 
     abbr -a py "python"
     abbr -a work "cd ~/Projects/project-manager && nvim ."
