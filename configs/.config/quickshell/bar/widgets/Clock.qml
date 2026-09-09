@@ -27,8 +27,6 @@ Item {
     
     property string currentTime: ""
     property string currentDate: ""
-    
-    // === ВОЗВРАЩАЕМ расчет смещения для правильного позиционирования точки ===
     property real centerOffset: (timeText.implicitWidth - dateText.implicitWidth) / 2
     
     Component.onCompleted: updateTime()
@@ -53,7 +51,7 @@ Item {
         font.family: "JetBrains Mono"
     }
     
-    // Точка-разделитель (теперь с правильным offset)
+    // Точка-разделитель
     Rectangle {
         id: dot
         anchors.horizontalCenter: parent.horizontalCenter
@@ -137,7 +135,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "\uf017"
-                font.family: "Font Awesome 6 Free Solid"
+                font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 12
                 color: root.badgeTextColor
             }
@@ -145,7 +143,7 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.countdownTimer ? root.countdownTimer.formatTime() : "00:00"
-                font.family: "Font Awesome 6 Free Solid"
+                font.family: "JetBrains Mono"
                 font.pixelSize: 11
                 font.weight: Font.Black
                 color: root.badgeTextColor
@@ -162,7 +160,7 @@ Item {
         color: root.accentColor
         font.pixelSize: 15
         font.weight: Font.Black
-        font.family: "Font Awesome 6 Free Solid"
+        font.family: "JetBrains Mono"
     }
     
     Timer {

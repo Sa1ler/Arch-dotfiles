@@ -8,6 +8,13 @@ Item {
     property date currentTime: new Date()
     property string pendingSeconds: ""
     
+    // === Кэширование цветов темы ===
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
+    readonly property color textDisabledColor: root.theme && root.theme.colors ? root.theme.colors.textDisabled : "#666666"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color surfaceColor: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+    
     property var dayNames: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
     property var monthNames: ["Января", "Февраля", "Марта", "Апреля", "Мая", "Июня", "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"]
     
@@ -23,9 +30,7 @@ Item {
         repeat: true
         running: true
         triggeredOnStart: true
-        onTriggered: {
-            root.currentTime = new Date()
-        }
+        onTriggered: root.currentTime = new Date()
     }
     
     onCurrentTimeChanged: {
@@ -53,7 +58,7 @@ Item {
                     if (hour >= 6 && hour < 18) return "\uf185"
                     return "\uf186"
                 }
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 16
                 color: {
                     var hour = root.currentTime.getHours()
@@ -65,10 +70,11 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.dayOfWeek
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: "JetBrains Mono"
                 font.pixelSize: 18
                 font.weight: Font.DemiBold
-                color: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAA"
+                font.letterSpacing: 0.3
+                color: root.textSecondaryColor
             }
         }
         
@@ -80,13 +86,14 @@ Item {
             
             Text {
                 text: Qt.formatTime(root.currentTime, "HH")
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: "JetBrains Mono"
                 font.pixelSize: 52
                 font.weight: Font.Black
-                color: root.theme && root.theme.colors ? root.theme.colors.text : "#FFF"
+                color: root.textColor
             }
             
-            Column {
+            // === КОМПОНЕНТ: Разделитель-точки ===
+            component DotSeparator: Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 10
                 
@@ -96,39 +103,25 @@ Item {
                         width: 6
                         height: 6
                         radius: 3
-                        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+                        color: root.accentColor
                         opacity: root.currentTime.getSeconds() % 2 === 0 ? 1 : 0.3
                         
-                        Behavior on opacity { NumberAnimation { duration: 300 } }
+                        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
                     }
                 }
             }
+            
+            DotSeparator {}
             
             Text {
                 text: Qt.formatTime(root.currentTime, "mm")
-                font.family: "JetBrainsMono Nerd Font"
+                font.family: "JetBrains Mono"
                 font.pixelSize: 52
                 font.weight: Font.Black
-                color: root.theme && root.theme.colors ? root.theme.colors.text : "#FFF"
+                color: root.textColor
             }
             
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
-                
-                Repeater {
-                    model: 2
-                    delegate: Rectangle {
-                        width: 6
-                        height: 6
-                        radius: 3
-                        color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
-                        opacity: root.currentTime.getSeconds() % 2 === 0 ? 1 : 0.3
-                        
-                        Behavior on opacity { NumberAnimation { duration: 300 } }
-                    }
-                }
-            }
+            DotSeparator {}
             
             Item {
                 width: secondsText.implicitWidth
@@ -138,10 +131,10 @@ Item {
                 Text {
                     id: secondsText
                     text: Qt.formatTime(root.currentTime, "ss")
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: "JetBrains Mono"
                     font.pixelSize: 52
                     font.weight: Font.Black
-                    color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+                    color: root.accentColor
                 }
             }
         }
@@ -150,10 +143,11 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.dateText
-            font.family: "JetBrainsMono Nerd Font"
+            font.family: "JetBrains Mono"
             font.pixelSize: 16
             font.weight: Font.DemiBold
-            color: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAA"
+            font.letterSpacing: 0.3
+            color: root.textSecondaryColor
         }
         
         // Прогресс-бар дня
@@ -165,7 +159,7 @@ Item {
                 width: 280
                 height: 5
                 radius: 2.5
-                color: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+                color: root.surfaceColor
                 clip: true
                 
                 Rectangle {
@@ -175,11 +169,11 @@ Item {
                     
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF" }
-                        GradientStop { position: 1.0; color: Qt.lighter(root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF", 1.3) }
+                        GradientStop { position: 0.0; color: root.accentColor }
+                        GradientStop { position: 1.0; color: Qt.lighter(root.accentColor, 1.25) }
                     }
                     
-                    Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuart } }
                 }
             }
             
@@ -189,17 +183,17 @@ Item {
                 
                 Text {
                     text: Math.round(root.dayProgress * 100) + "%"
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: "JetBrains Mono"
                     font.pixelSize: 10
-                    font.weight: Font.Bold
-                    color: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+                    font.weight: Font.DemiBold
+                    color: root.accentColor
                 }
                 
                 Text {
                     text: "дня прошло"
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: "JetBrains Mono"
                     font.pixelSize: 10
-                    color: root.theme && root.theme.colors ? root.theme.colors.textDisabled : "#666"
+                    color: root.textDisabledColor
                 }
             }
         }
@@ -214,14 +208,14 @@ Item {
                 target: secondsText 
                 property: "y" 
                 to: -secondsText.height 
-                duration: 150 
-                easing.type: Easing.InCubic 
+                duration: 140 
+                easing.type: Easing.InQuart 
             }
             NumberAnimation { 
                 target: secondsText 
                 property: "opacity" 
                 to: 0 
-                duration: 150 
+                duration: 140 
             }
         }
         
@@ -237,14 +231,14 @@ Item {
                 target: secondsText 
                 property: "y" 
                 to: 0 
-                duration: 150 
-                easing.type: Easing.OutCubic 
+                duration: 140 
+                easing.type: Easing.OutQuart 
             }
             NumberAnimation { 
                 target: secondsText 
                 property: "opacity" 
                 to: 1 
-                duration: 150 
+                duration: 140 
             }
         }
     }

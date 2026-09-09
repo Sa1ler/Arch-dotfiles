@@ -12,6 +12,14 @@ Item {
     property int slideDirection: 1
     property bool isAnimating: false
     
+    // === Кэширование цветов темы ===
+    readonly property color surfaceColor: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color textSelectedColor: root.theme && root.theme.colors ? root.theme.colors.textSelected : "#FFFFFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color borderColor: root.theme && root.theme.colors ? root.theme.colors.border : "#2A2A2A"
+    
     property var dayNamesShort: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
     property var monthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
     
@@ -76,9 +84,9 @@ Item {
         width: 280
         height: 320
         radius: 14
-        color: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+        color: root.surfaceColor
         border.width: 1
-        border.color: root.theme && root.theme.colors ? root.theme.colors.border : "#2A2A2A"
+        border.color: root.borderColor
         
         Column {
             anchors.fill: parent
@@ -95,15 +103,17 @@ Item {
                     height: 28
                     radius: 8
                     color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    scale: prevMouse.containsMouse ? 1.08 : 1.0
                     
                     Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
                     
                     Text {
                         anchors.centerIn: parent
                         text: "‹"
                         font.pixelSize: 18
                         font.bold: true
-                        color: root.theme.colors.text || "#FFF"
+                        color: root.textColor
                     }
                     
                     MouseArea {
@@ -121,10 +131,10 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     horizontalAlignment: Text.AlignHCenter
                     text: monthNames[displayMonth] + " " + displayYear
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: "JetBrains Mono"
                     font.pixelSize: 14
-                    font.weight: Font.Bold
-                    color: root.theme.colors.text || "#FFF"
+                    font.weight: Font.DemiBold
+                    color: root.textColor
                 }
                 
                 Rectangle {
@@ -132,15 +142,17 @@ Item {
                     height: 28
                     radius: 8
                     color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    scale: nextMouse.containsMouse ? 1.08 : 1.0
                     
                     Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
                     
                     Text {
                         anchors.centerIn: parent
                         text: "›"
                         font.pixelSize: 18
                         font.bold: true
-                        color: root.theme.colors.text || "#FFF"
+                        color: root.textColor
                     }
                     
                     MouseArea {
@@ -166,10 +178,10 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: Text.AlignHCenter
                         text: modelData
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: "JetBrains Mono"
                         font.pixelSize: 11
-                        font.weight: Font.Bold
-                        color: index >= 5 ? (root.theme.colors.accent || "#5B9BFF") : (root.theme.colors.textSecondary || "#AAA")
+                        font.weight: Font.DemiBold
+                        color: index >= 5 ? root.accentColor : root.textSecondaryColor
                     }
                 }
             }
@@ -180,6 +192,7 @@ Item {
                 height: 180
                 clip: true
                 
+                // Предыдущая сетка (для анимации)
                 Grid {
                     id: prevGrid
                     anchors.fill: parent
@@ -201,26 +214,26 @@ Item {
                             radius: 8
                             property int day: index + 1
                             property bool isCurrentDay: isToday(day)
-                            
-                            color: isCurrentDay ? (root.theme.colors.accent || "#5B9BFF") : "transparent"
+                            color: isCurrentDay ? root.accentColor : "transparent"
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: prevDayCell.day
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: "JetBrains Mono"
                                 font.pixelSize: 12
                                 font.weight: prevDayCell.isCurrentDay ? Font.Black : Font.DemiBold
                                 color: {
-                                    if (prevDayCell.isCurrentDay) return root.theme.colors.textSelected || "#FFF"
+                                    if (prevDayCell.isCurrentDay) return root.textSelectedColor
                                     var dow = new Date(displayYear, displayMonth, prevDayCell.day).getDay()
-                                    if (dow === 0 || dow === 6) return root.theme.colors.accent || "#5B9BFF"
-                                    return root.theme.colors.text || "#FFF"
+                                    if (dow === 0 || dow === 6) return root.accentColor
+                                    return root.textColor
                                 }
                             }
                         }
                     }
                 }
                 
+                // Текущая сетка
                 Grid {
                     id: daysGrid
                     anchors.fill: parent
@@ -244,7 +257,7 @@ Item {
                             property bool isHovered: dayMouse.containsMouse
                             
                             color: {
-                                if (isCurrentDay) return root.theme.colors.accent || "#5B9BFF"
+                                if (isCurrentDay) return root.accentColor
                                 if (isHovered) return Qt.rgba(1, 1, 1, 0.08)
                                 return "transparent"
                             }
@@ -254,14 +267,14 @@ Item {
                             Text {
                                 anchors.centerIn: parent
                                 text: dayCell.day
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: "JetBrains Mono"
                                 font.pixelSize: 12
                                 font.weight: dayCell.isCurrentDay ? Font.Black : Font.DemiBold
                                 color: {
-                                    if (dayCell.isCurrentDay) return root.theme.colors.textSelected || "#FFF"
+                                    if (dayCell.isCurrentDay) return root.textSelectedColor
                                     var dow = new Date(displayYear, displayMonth, dayCell.day).getDay()
-                                    if (dow === 0 || dow === 6) return root.theme.colors.accent || "#5B9BFF"
-                                    return root.theme.colors.text || "#FFF"
+                                    if (dow === 0 || dow === 6) return root.accentColor
+                                    return root.textColor
                                 }
                             }
                             
@@ -275,7 +288,8 @@ Item {
                     }
                 }
                 
-                // Анимация перелистывания
+                // === УПРОЩЁННАЯ анимация перелистывания ===
+                // Убраны rotation и scale (замедляли рендеринг) — только x + opacity
                 SequentialAnimation {
                     id: slideAnimation
                     
@@ -285,88 +299,54 @@ Item {
                         script: {
                             prevGrid.opacity = 0
                             prevGrid.x = -root.slideDirection * daysGrid.width * 1.2
-                            prevGrid.scale = 0.9
-                            prevGrid.rotation = -root.slideDirection * 3
                         }
                     }
                     
                     ParallelAnimation {
-                        SequentialAnimation {
-                            ParallelAnimation {
-                                NumberAnimation { 
-                                    target: daysGrid 
-                                    property: "x" 
-                                    to: root.slideDirection * daysGrid.width * 1.2 
-                                    duration: 280 
-                                    easing.type: Easing.InOutCubic 
-                                }
-                                NumberAnimation { 
-                                    target: daysGrid 
-                                    property: "opacity" 
-                                    to: 0 
-                                    duration: 200 
-                                }
-                                NumberAnimation { 
-                                    target: daysGrid 
-                                    property: "scale" 
-                                    to: 0.92 
-                                    duration: 280 
-                                    easing.type: Easing.InCubic 
-                                }
-                                NumberAnimation { 
-                                    target: daysGrid 
-                                    property: "rotation" 
-                                    to: root.slideDirection * 4 
-                                    duration: 280 
-                                    easing.type: Easing.InCubic 
-                                }
-                            }
+                        // Старая сетка уезжает
+                        NumberAnimation { 
+                            target: daysGrid 
+                            property: "x" 
+                            to: root.slideDirection * daysGrid.width * 1.2 
+                            duration: 260 
+                            easing.type: Easing.InQuart 
                         }
-                        
-                        SequentialAnimation {
-                            PauseAnimation { duration: 60 }
-                            ParallelAnimation {
-                                NumberAnimation { 
-                                    target: prevGrid 
-                                    property: "x" 
-                                    to: 0 
-                                    duration: 280 
-                                    easing.type: Easing.OutBack 
-                                    easing.overshoot: 1.15 
-                                }
-                                NumberAnimation { 
-                                    target: prevGrid 
-                                    property: "opacity" 
-                                    to: 1 
-                                    duration: 220 
-                                    easing.type: Easing.OutCubic 
-                                }
-                                NumberAnimation { 
-                                    target: prevGrid 
-                                    property: "scale" 
-                                    to: 1.0 
-                                    duration: 280 
-                                    easing.type: Easing.OutBack 
-                                    easing.overshoot: 1.1 
-                                }
-                                NumberAnimation { 
-                                    target: prevGrid 
-                                    property: "rotation" 
-                                    to: 0 
-                                    duration: 280 
-                                    easing.type: Easing.OutBack 
-                                    easing.overshoot: 0.8 
-                                }
-                            }
+                        NumberAnimation { 
+                            target: daysGrid 
+                            property: "opacity" 
+                            to: 0 
+                            duration: 180 
                         }
                     }
                     
                     ScriptAction {
                         script: {
                             daysGrid.x = 0
+                            daysGrid.opacity = 0
+                        }
+                    }
+                    
+                    ParallelAnimation {
+                        // Новая сетка въезжает
+                        NumberAnimation { 
+                            target: prevGrid 
+                            property: "x" 
+                            to: 0 
+                            duration: 300 
+                            easing.type: Easing.OutQuart 
+                        }
+                        NumberAnimation { 
+                            target: prevGrid 
+                            property: "opacity" 
+                            to: 1 
+                            duration: 280 
+                            easing.type: Easing.OutQuart 
+                        }
+                    }
+                    
+                    ScriptAction {
+                        script: {
                             daysGrid.opacity = 1
-                            daysGrid.scale = 1.0
-                            daysGrid.rotation = 0
                         }
                     }
                     
@@ -379,19 +359,21 @@ Item {
                 width: parent.width
                 height: 28
                 radius: 8
-                color: todayMouse.containsMouse ? (root.theme.colors.accent || "#5B9BFF") : Qt.rgba(1, 1, 1, 0.05)
+                color: todayMouse.containsMouse && !root.isCurrentMonth ? root.accentColor : Qt.rgba(1, 1, 1, 0.05)
                 opacity: root.isCurrentMonth ? 0.4 : 1
+                scale: todayMouse.containsMouse && !root.isCurrentMonth ? 1.02 : 1.0
                 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation { duration: 180 } }
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
+                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
                 
                 Text {
                     anchors.centerIn: parent
                     text: "Сегодня"
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: "JetBrains Mono"
                     font.pixelSize: 11
-                    font.weight: Font.Bold
-                    color: root.theme.colors.text || "#FFF"
+                    font.weight: Font.DemiBold
+                    color: root.textColor
                 }
                 
                 MouseArea {

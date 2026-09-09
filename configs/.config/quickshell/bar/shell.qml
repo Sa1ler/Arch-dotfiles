@@ -20,7 +20,6 @@ ShellRoot {
     Stopwatch { id: stopwatch }
     CountdownTimer { id: countdownTimer }
 
-    // Оптимизированный IPC
     IpcHandler {
         target: "topbar"
         
@@ -50,7 +49,7 @@ ShellRoot {
     
     TimePopupWindow {
         id: timePopupWindow
-        visible: false // <-- ИСПРАВЛЕНО: было false1, теперь корректный boolean
+        visible: false
         
         theme: themeManager.theme
         soundManager: soundManager

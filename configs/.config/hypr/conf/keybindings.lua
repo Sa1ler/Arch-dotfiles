@@ -27,13 +27,10 @@ hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs -c generalmenu ipc call panel tog
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(vpn))
 hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("/home/" .. os.getenv("USER") .. "/.local/bin/hypr-float toggle 70"))
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("ghostty -e bash -c '/home/graff/.config/fuzzy_open.sh; exec bash'"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("grim - | wl-copy"))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.float({ action = "toggle" }))
 hl.bind("F10", hl.dsp.exec_cmd("qs -c bar ipc call topbar toggleScreenshot"))
-hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("qs -c settings ipc call settings toggle"))
 
 -- ----------------------------------------------------------------------------
 -- ЗВУК

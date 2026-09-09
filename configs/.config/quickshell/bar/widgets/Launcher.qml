@@ -10,13 +10,32 @@ Item {
     property var soundManager: null
     property bool active: false
     property string searchText: ""
+    property string debouncedSearchText: ""
     property var allApps: []
     property bool isFirstChange: true
     
+    // === Кэширование цветов темы ===
+    readonly property color surfaceColor: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
+    readonly property color textDisabledColor: root.theme && root.theme.colors ? root.theme.colors.textDisabled : "#666666"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color borderColor: root.theme && root.theme.colors ? root.theme.colors.border : "#333333"
+    readonly property color surfaceHoverColor: root.theme && root.theme.colors ? root.theme.colors.surfaceHover : "#444444"
+    
     signal close()
 
+    // === Debounce для поиска ===
+    Timer {
+        id: searchDebounce
+        interval: 70
+        onTriggered: debouncedSearchText = searchText
+    }
+    
+    onSearchTextChanged: searchDebounce.restart()
+
     property var filteredApps: {
-        var q = searchText.toLowerCase().trim()
+        var q = debouncedSearchText.toLowerCase().trim()
         var result = []
         
         if (q.length === 0) {
@@ -48,6 +67,8 @@ Item {
                 var appCopy = Object.assign({}, app)
                 appCopy.matchScore = matchScore + (app.usageScore || 0)
                 result.push(appCopy)
+                // === Оптимизация: останавливаемся при достижении лимита ===
+                if (result.length >= 20) break
             }
         }
         
@@ -104,17 +125,11 @@ Item {
         }
     }
 
-    Process {
-        id: launchProcess
-        property string appName: ""
-        property string execCmd: ""
-        command: ["qs", "-c", "launcher", "ipc", "call", "launcher", "launchApp", appName, execCmd]
-    }
-
     onActiveChanged: {
         if (active) {
             isFirstChange = true
             searchText = ""
+            debouncedSearchText = ""
             searchInput.text = ""
             
             if (allApps.length === 0) {
@@ -177,11 +192,9 @@ Item {
             anchors.margins: 12
             height: 48
             radius: 14
-            color: root.theme.colors.surface || "#1A1F26"
+            color: root.surfaceColor
             border.width: searchInput.activeFocus ? 2 : 1
-            border.color: searchInput.activeFocus ? 
-                          (root.theme.colors.accent || "#5B9BFF") : 
-                          (root.theme.colors.border || "#333")
+            border.color: searchInput.activeFocus ? root.accentColor : root.borderColor
             
             Behavior on border.color { ColorAnimation { duration: 200 } }
             
@@ -195,7 +208,7 @@ Item {
                     id: searchInput
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - 50
-                    color: root.theme.colors.text || "#FFF"
+                    color: root.textColor
                     font.pixelSize: 15
                     clip: true
                     selectByMouse: true
@@ -211,7 +224,7 @@ Item {
                     Text {
                         anchors.fill: parent
                         text: "Search apps..."
-                        color: root.theme.colors.textDisabled || "#666"
+                        color: root.textDisabledColor
                         font.pixelSize: 14
                         visible: searchInput.text === ""
                         verticalAlignment: Text.AlignVCenter
@@ -231,7 +244,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: "✕"
-                        color: root.theme.colors.textSecondary || "#AAA"
+                        color: root.textSecondaryColor
                         font.pixelSize: 11
                     }
                     
@@ -294,8 +307,8 @@ Item {
                     
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: root.theme.colors.accent || "#5B9BFF" }
-                        GradientStop { position: 1.0; color: Qt.lighter(root.theme.colors.accent || "#5B9BFF", 1.15) }
+                        GradientStop { position: 0.0; color: root.accentColor }
+                        GradientStop { position: 1.0; color: Qt.lighter(root.accentColor, 1.15) }
                     }
                     
                     property real targetY: (appsListView.currentIndex >= 0 && appsListView.currentItem) ? appsListView.currentItem.y : 0
@@ -380,7 +393,7 @@ Item {
                                 radius: 9
                                 color: delegateRoot.isSelected ? 
                                        Qt.rgba(0, 0, 0, 0.25) : 
-                                       (root.theme.colors.surface || "#1A1F26")
+                                       root.surfaceColor
                                 anchors.verticalCenter: parent.verticalCenter
                                 
                                 Behavior on color { ColorAnimation { duration: 180 } }
@@ -422,38 +435,24 @@ Item {
                                 Text {
                                     anchors.centerIn: parent
                                     visible: delegateIcon.loadFailed || delegateIcon.source === ""
-                                    text: ""
-                                    font.family: "JetBrainsMono Nerd Font"
+                                    text: modelData.name ? modelData.name.charAt(0).toUpperCase() : ""
                                     font.pixelSize: 14
-                                    color: delegateRoot.isSelected ? "#FFF" : (root.theme.colors.textSecondary || "#AAA")
+                                    font.bold: true
+                                    color: delegateRoot.isSelected ? "#FFF" : root.textSecondaryColor
                                 }
                             }
                             
-                            // Название
+                            // Название (расширено, стрелка убрана)
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 70
+                                width: parent.width - 40
                                 text: modelData.name
                                 font.pixelSize: 14
                                 font.bold: delegateRoot.isSelected
-                                color: delegateRoot.isSelected ? "#FFF" : (root.theme.colors.text || "#FFF")
+                                color: delegateRoot.isSelected ? "#FFF" : root.textColor
                                 elide: Text.ElideRight
                                 
                                 Behavior on color { ColorAnimation { duration: 180 } }
-                            }
-                            
-                            // Стрелка запуска
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: ""
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 12
-                                color: "#FFF"
-                                opacity: delegateRoot.isSelected ? 0.9 : 0
-                                x: delegateRoot.isSelected ? 0 : -8
-                                
-                                Behavior on opacity { NumberAnimation { duration: 200 } }
-                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                             }
                         }
                         
@@ -485,17 +484,17 @@ Item {
                     
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: ""
-                        color: root.theme.colors.textDisabled || "#555"
+                        text: "\uf002"
+                        color: root.textDisabledColor
                         font.pixelSize: 32
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: "Font Awesome 6 Free Solid"
                         opacity: 0.4
                     }
                     
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "Nothing found"
-                        color: root.theme.colors.textDisabled || "#666"
+                        color: root.textDisabledColor
                         font.pixelSize: 13
                     }
                 }
@@ -507,7 +506,7 @@ Item {
                     
                     contentItem: Rectangle {
                         radius: 2
-                        color: root.theme.colors.surfaceHover || "#444"
+                        color: root.surfaceHoverColor
                         opacity: 0.6
                     }
                 }
@@ -515,14 +514,13 @@ Item {
         }
     }
 
+    // === Запуск приложения через execDetached (быстрее чем Process) ===
     function activateIndex(index) {
         if (index < 0 || index >= filteredApps.length) return
         var item = filteredApps[index]
         if (!item) return
         
-        launchProcess.appName = item.name
-        launchProcess.execCmd = item.exec
-        launchProcess.running = true
+        Quickshell.execDetached(["qs", "-c", "launcher", "ipc", "call", "launcher", "launchApp", item.name, item.exec])
         if (soundManager) soundManager.play("quick_click.wav")
         close()
     }

@@ -9,51 +9,62 @@ Item {
     property var soundManager: null
     property bool active: false
     
+    readonly property color surfaceColor: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color borderColor: root.theme && root.theme.colors ? root.theme.colors.border : "#2A2A2A"
+    
     signal close()
 
-    // Процесс для полного снимка
-    Process {
-        id: fullScreenshot
-        command: ["sh", "-c", "grim - | wl-copy && notify-send 'Скриншот' 'Полный снимок экрана' -i camera -t 2000"]
-        
-        onRunningChanged: {
-            if (!running && root.soundManager) {
-                root.soundManager.play("quick_click.wav")
-            }
-        }
+    function takeFullScreenshot() {
+        console.log("[ScreenshotMenu] Taking full screenshot")
+        Quickshell.execDetached([
+            "sh", "-c",
+            "grim - | wl-copy && notify-send '📸 Скриншот' 'Полный снимок скопирован в буфер' -i camera -t 2000"
+        ])
+        // 🔊 quick_click.wav — снимок сделан
+        if (root.soundManager) root.soundManager.play("quick_click.wav")
+        root.close()
+    }
+    
+    function takeRegionScreenshot() {
+        console.log("[ScreenshotMenu] Taking region screenshot")
+        Quickshell.execDetached([
+            "sh", "-c",
+            "grim -g \"$(slurp)\" - | wl-copy && notify-send '📸 Скриншот' 'Снимок области скопирован' -i camera -t 2000"
+        ])
+        // 🔊 quick_click.wav — снимок области сделан
+        if (root.soundManager) root.soundManager.play("quick_click.wav")
+        root.close()
     }
 
-    // Кнопки
     Row {
         id: buttonRow
         anchors.centerIn: parent
         spacing: 14
 
-        // Кнопка полного снимка
+        // === Кнопка полного снимка ===
         Rectangle {
             id: fullBtn
             width: 52
             height: 52
             radius: 12
-            color: fullMouse.containsMouse ? 
-                   (root.theme.colors.accent || "#5B9BFF") : 
-                   (root.theme.colors.surface || "#1A1F26")
+            color: fullMouse.containsMouse ? root.accentColor : root.surfaceColor
             border.width: 1
-            border.color: root.theme.colors.border || "#2A2A2A"
+            border.color: root.borderColor
+            scale: fullMouse.pressed ? 0.95 : (fullMouse.containsMouse ? 1.05 : 1.0)
             
-            Behavior on color { ColorAnimation { duration: 200 } }
-            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
-            
-            scale: fullMouse.pressed ? 0.95 : 1.0
+            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
 
             Text {
                 anchors.centerIn: parent
-                text: "\uf065"
-                font.family: "JetBrainsMono Nerd Font Mono"
-                font.pixelSize: 24
-                color: fullMouse.containsMouse ? "#FFF" : (root.theme.colors.text || "#FFF")
-                
-                Behavior on color { ColorAnimation { duration: 200 } }
+                text: "\uf030"  // fa-camera (есть в Free)
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 22
+                font.weight: Font.Black
+                color: fullMouse.containsMouse ? "#FFFFFF" : root.textColor
+                Behavior on color { ColorAnimation { duration: 180 } }
             }
 
             MouseArea {
@@ -61,39 +72,32 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                
-                onClicked: {
-                    fullScreenshot.running = true
-                    root.close()
-                }
+                onClicked: root.takeFullScreenshot()
             }
         }
 
-        // Кнопка частичного снимка
+        // === Кнопка частичного снимка ===
         Rectangle {
             id: regionBtn
             width: 52
             height: 52
             radius: 12
-            color: regionMouse.containsMouse ? 
-                   (root.theme.colors.accent || "#5B9BFF") : 
-                   (root.theme.colors.surface || "#1A1F26")
+            color: regionMouse.containsMouse ? root.accentColor : root.surfaceColor
             border.width: 1
-            border.color: root.theme.colors.border || "#2A2A2A"
+            border.color: root.borderColor
+            scale: regionMouse.pressed ? 0.95 : (regionMouse.containsMouse ? 1.05 : 1.0)
             
-            Behavior on color { ColorAnimation { duration: 200 } }
-            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
-            
-            scale: regionMouse.pressed ? 0.95 : 1.0
+            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutQuart } }
 
             Text {
                 anchors.centerIn: parent
-                text: "\uf125"
-                font.family: "JetBrainsMono Nerd Font Mono"
-                font.pixelSize: 24
-                color: regionMouse.containsMouse ? "#FFF" : (root.theme.colors.text || "#FFF")
-                
-                Behavior on color { ColorAnimation { duration: 200 } }
+                text: "\uf125"  // fa-crop (есть в Free, НЕ crop-alt!)
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 22
+                font.weight: Font.Black
+                color: regionMouse.containsMouse ? "#FFFFFF" : root.textColor
+                Behavior on color { ColorAnimation { duration: 180 } }
             }
 
             MouseArea {
@@ -101,12 +105,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                
-                onClicked: {
-                    Quickshell.execDetached(["sh", "-c", "grim -g \"$(slurp)\" - | wl-copy && notify-send 'Скриншот' 'Снимок области' -i camera -t 2000"])
-                    if (root.soundManager) root.soundManager.play("quick_click.wav")
-                    root.close()
-                }
+                onClicked: root.takeRegionScreenshot()
             }
         }
     }

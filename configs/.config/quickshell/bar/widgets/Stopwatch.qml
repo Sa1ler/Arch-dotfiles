@@ -6,12 +6,17 @@ Item {
     property bool running: false
     property int elapsedSeconds: 0
     
-    // Таймер работает даже когда попап закрыт
+    // === Кэширование форматированного времени ===
+    property string formattedTime: formatTime()
+    
     Timer {
         interval: 1000
         repeat: true
         running: stopwatch.running
-        onTriggered: stopwatch.elapsedSeconds++
+        onTriggered: {
+            stopwatch.elapsedSeconds++
+            stopwatch.formattedTime = stopwatch.formatTime()
+        }
     }
     
     function start() {
@@ -25,6 +30,7 @@ Item {
     function reset() {
         running = false
         elapsedSeconds = 0
+        formattedTime = "00:00"
     }
     
     function getHours() {

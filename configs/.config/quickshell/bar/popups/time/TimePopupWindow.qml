@@ -1,4 +1,5 @@
 import QtQuick
+import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Wayland
 
@@ -13,12 +14,16 @@ PanelWindow {
     property var countdownTimer: null
     
     property bool windowVisible: false
-    property bool isAnimating: false
     
-    property real collapsedWidth: 180
-    property real expandedWidth: 980
-    property real expandedHeight: 360
-    property real barOffset: 45
+    // === Целочисленные размеры (быстрее, чем real) ===
+    property int collapsedWidth: 180
+    property int expandedWidth: 980
+    property int expandedHeight: 360
+    property int barOffset: 45
+    
+    // === Кэширование цветов темы ===
+    readonly property color bgColor: root.theme && root.theme.colors ? root.theme.colors.background : "#181818"
+    readonly property color borderColor: root.theme && root.theme.colors ? root.theme.colors.border : "#2A2A2A"
 
     color: "transparent"
 
@@ -59,88 +64,84 @@ PanelWindow {
         }
     }
 
-    // Анимация открытия
+    // === Анимация открытия (3 фазы, но параллельно где возможно) ===
     SequentialAnimation {
         id: openAnimation
         
         onStarted: {
-            root.isAnimating = true
             contentWrapper.opacity = 0
             contentWrapper.y = 12
             popupRect.scale = 0.96
             shadowRect.opacity = 0
         }
         
-        // Фаза 1: раскрытие вниз с лёгким масштабированием
+        // Фаза 1: раскрытие вниз + масштабирование
         ParallelAnimation {
             NumberAnimation { 
                 target: popupRect 
                 property: "height" 
                 from: 0 
                 to: root.expandedHeight 
-                duration: 220 
-                easing.type: Easing.OutCubic 
+                duration: 200 
+                easing.type: Easing.OutQuart 
             }
             NumberAnimation { 
                 target: popupRect 
                 property: "scale" 
                 from: 0.96 
                 to: 1.0 
-                duration: 220 
-                easing.type: Easing.OutCubic 
+                duration: 200 
+                easing.type: Easing.OutQuart 
             }
         }
         
-        // Фаза 2: раскрытие в стороны с мягким отскоком
-        NumberAnimation { 
-            target: popupRect 
-            property: "width" 
-            from: root.collapsedWidth 
-            to: root.expandedWidth 
-            duration: 380 
-            easing.type: Easing.OutBack 
-            easing.overshoot: 1.12 
-        }
-        
-        // Фаза 3: каскадное появление контента
+        // Фаза 2: раскрытие в стороны с мягким отскоком + тень
         ParallelAnimation {
+            NumberAnimation { 
+                target: popupRect 
+                property: "width" 
+                from: root.collapsedWidth 
+                to: root.expandedWidth 
+                duration: 340 
+                easing.type: Easing.OutBack 
+                easing.overshoot: 1.08
+            }
             NumberAnimation { 
                 target: shadowRect 
                 property: "opacity" 
                 from: 0 
                 to: 1 
-                duration: 300 
-                easing.type: Easing.OutCubic 
+                duration: 280 
+                easing.type: Easing.OutQuart 
             }
+        }
+        
+        // Фаза 3: каскадное появление контента
+        ParallelAnimation {
             NumberAnimation { 
                 target: contentWrapper 
                 property: "y" 
                 from: 12 
                 to: 0 
-                duration: 300 
-                easing.type: Easing.OutCubic 
+                duration: 280 
+                easing.type: Easing.OutQuart 
             }
             NumberAnimation { 
                 target: contentWrapper 
                 property: "opacity" 
                 from: 0 
                 to: 1 
-                duration: 280 
-                easing.type: Easing.OutCubic 
+                duration: 260 
+                easing.type: Easing.OutQuart 
             }
         }
-        
-        onFinished: root.isAnimating = false
     }
 
-    // Анимация закрытия
+    // === Анимация закрытия (быстрее и чище) ===
     SequentialAnimation {
         id: closeAnimation
         
-        onStarted: {
-            root.isAnimating = true
-            shadowRect.opacity = 0
-        }
+        onStarted: shadowRect.opacity = 0
         
         // Фаза 1: контент уходит вниз и исчезает
         ParallelAnimation {
@@ -148,36 +149,36 @@ PanelWindow {
                 target: contentWrapper 
                 property: "opacity" 
                 to: 0 
-                duration: 100 
-                easing.type: Easing.InCubic 
+                duration: 120 
+                easing.type: Easing.InQuart 
             }
             NumberAnimation { 
                 target: contentWrapper 
                 property: "y" 
                 from: 0 
-                to: 8 
-                duration: 100 
-                easing.type: Easing.InCubic 
+                to: 10 
+                duration: 120 
+                easing.type: Easing.InQuart 
             }
         }
         
-        // Фаза 2: сворачивание в стороны с лёгким масштабированием
+        // Фаза 2: сворачивание в стороны + масштабирование
         ParallelAnimation {
             NumberAnimation { 
                 target: popupRect 
                 property: "width" 
                 from: root.expandedWidth 
                 to: root.collapsedWidth 
-                duration: 220 
-                easing.type: Easing.InCubic 
+                duration: 200 
+                easing.type: Easing.InQuart 
             }
             NumberAnimation { 
                 target: popupRect 
                 property: "scale" 
                 from: 1.0 
                 to: 0.97 
-                duration: 220 
-                easing.type: Easing.InCubic 
+                duration: 200 
+                easing.type: Easing.InQuart 
             }
         }
         
@@ -187,13 +188,12 @@ PanelWindow {
             property: "height" 
             from: root.expandedHeight 
             to: 0 
-            duration: 200 
-            easing.type: Easing.InCubic 
+            duration: 180 
+            easing.type: Easing.InQuart 
         }
         
         onFinished: {
             root.visible = false
-            root.isAnimating = false
             popupRect.scale = 1.0
             contentWrapper.y = 0
         }
@@ -209,11 +209,11 @@ PanelWindow {
             event.accepted = true
         }
 
-        // Тень под рамкой
+        // === Нативная GPU-тень через DropShadow ===
+        // Выглядит намного лучше, чем два Rectangle, и рендерится аппаратно
         Rectangle {
             id: shadowRect
             anchors.top: popupRect.top
-            anchors.topMargin: 4
             anchors.horizontalCenter: popupRect.horizontalCenter
             width: popupRect.width
             height: popupRect.height
@@ -221,22 +221,18 @@ PanelWindow {
             color: "#000000"
             opacity: 0
             
-            Behavior on opacity { NumberAnimation { duration: 300 } }
-        }
-        
-        // Размытие тени (имитация)
-        Rectangle {
-            anchors.top: shadowRect.top
-            anchors.topMargin: 2
-            anchors.horizontalCenter: shadowRect.horizontalCenter
-            width: shadowRect.width + 8
-            height: shadowRect.height + 8
-            radius: 20
-            color: "#000000"
-            opacity: shadowRect.opacity * 0.3
+            layer.enabled: opacity > 0.01
+            layer.effect: DropShadow {
+                transparentBorder: true
+                radius: 24
+                samples: 32
+                color: Qt.rgba(0, 0, 0, 0.5)
+                horizontalOffset: 0
+                verticalOffset: 8
+            }
         }
 
-        // Прямоугольник попапа
+        // === Прямоугольник попапа ===
         Rectangle {
             id: popupRect
             anchors.top: parent.top
@@ -247,9 +243,9 @@ PanelWindow {
             height: 0
             
             radius: 14
-            color: root.theme && root.theme.colors ? root.theme.colors.background : "#181818"
+            color: root.bgColor
             border.width: 1
-            border.color: root.theme && root.theme.colors ? root.theme.colors.border : "#2A2A2A"
+            border.color: root.borderColor
             clip: true
             
             transformOrigin: Item.Top
@@ -295,37 +291,28 @@ PanelWindow {
             }
         }
 
-        // Области для закрытия по клику вне попапа
+        // === ОДИН MouseArea для закрытия по клику вне попапа ===
+        // Вместо 4 отдельных MouseArea по сторонам
         MouseArea {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: popupRect.top
-            onClicked: root.close()
-        }
-        
-        MouseArea {
-            anchors.top: popupRect.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            onClicked: root.close()
-        }
-        
-        MouseArea {
-            anchors.top: popupRect.top
-            anchors.left: parent.left
-            anchors.bottom: popupRect.bottom
-            anchors.right: popupRect.left
-            onClicked: root.close()
-        }
-        
-        MouseArea {
-            anchors.top: popupRect.top
-            anchors.left: popupRect.right
-            anchors.right: parent.right
-            anchors.bottom: popupRect.bottom
-            onClicked: root.close()
+            anchors.fill: parent
+            z: -1  // Под попапом
+            
+            onClicked: function(mouse) {
+                // Преобразуем координаты клика в координаты popupRect
+                var clickX = mouse.x
+                var clickY = mouse.y
+                
+                var popupX = popupRect.x
+                var popupY = popupRect.y
+                var popupW = popupRect.width
+                var popupH = popupRect.height
+                
+                // Если клик вне попапа — закрываем
+                if (clickX < popupX || clickX > popupX + popupW ||
+                    clickY < popupY || clickY > popupY + popupH) {
+                    root.close()
+                }
+            }
         }
     }
 }

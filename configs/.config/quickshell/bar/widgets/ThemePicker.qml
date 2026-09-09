@@ -11,11 +11,15 @@ Item {
     property bool active: false
     property var themesList: []
     property int currentIndex: 0
-    property bool isFirstChange: true  // ← ВОЗВРАЩЕНО
+    property bool isFirstChange: true
+    
+    readonly property color surfaceColor: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
+    readonly property color textColor: root.theme && root.theme.colors ? root.theme.colors.text : "#FFFFFF"
+    readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
+    readonly property color textSecondaryColor: root.theme && root.theme.colors ? root.theme.colors.textSecondary : "#AAAAAA"
     
     signal close()
 
-    // Загрузка списка тем через процесс
     Process {
         id: loadThemes
         command: ["sh", "-c", "ls -1 ~/.config/quickshell/themes/ 2>/dev/null | grep -iE '\\.json$' | sed 's/\\.json$//' | sort"]
@@ -23,12 +27,10 @@ Item {
             onStreamFinished: {
                 var files = text.trim().split('\n').filter(function(f) { return f.length > 0 })
                 root.themesList = files
-                console.log("Loaded themes:", files.length)
                 
-                // Установить текущую тему после загрузки
-                if (root.active && root.themeManager && root.themeManager.currentTheme && root.themesList.length > 0) {
-                    for (var i = 0; i < root.themesList.length; i++) {
-                        if (root.themesList[i] === root.themeManager.currentTheme) {
+                if (root.active && root.themeManager && root.themeManager.currentTheme && files.length > 0) {
+                    for (var i = 0; i < files.length; i++) {
+                        if (files[i] === root.themeManager.currentTheme) {
                             root.currentIndex = i
                             pathView.currentIndex = i
                             break
@@ -39,22 +41,12 @@ Item {
         }
     }
 
-    // Применение темы через themepicker процесс
-    Process {
-        id: applyProcess
-        property string themeName: ""
-        command: ["qs", "-c", "themepicker", "ipc", "call", "themepicker", "applyTheme", themeName]
-    }
-
     onActiveChanged: {
         if (active) {
-            isFirstChange = true  // ← Сбрасываем при открытии
-            
-            // Запускаем загрузку если список пуст
+            isFirstChange = true
             if (themesList.length === 0) {
-                loadThemes.running = true  // ← ВОЗВРАЩЕНО
+                loadThemes.running = true
             } else if (themeManager && themeManager.currentTheme && themesList.length > 0) {
-                // Найти текущую тему и установить индекс
                 for (var i = 0; i < themesList.length; i++) {
                     if (themesList[i] === themeManager.currentTheme) {
                         root.currentIndex = i
@@ -64,24 +56,22 @@ Item {
                 }
             }
         } else {
-            isFirstChange = true  // ← Сбрасываем при закрытии
+            isFirstChange = true
         }
     }
 
-    // Заголовок
     Text {
         id: title
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 14
         text: "Themes"
-        color: root.theme.colors.text || "#FFF"
+        color: root.textColor
         font.pixelSize: 17
         font.bold: true
         opacity: 0.9
     }
 
-    // Карусель тем
     PathView {
         id: pathView
         anchors.top: title.bottom
@@ -89,24 +79,24 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.topMargin: 8
-        anchors.bottomMargin: 36
-        anchors.leftMargin: 36
-        anchors.rightMargin: 36
+        anchors.bottomMargin: 40
+        anchors.leftMargin: 70
+        anchors.rightMargin: 70
         
         clip: true
-        
         model: root.themesList
         pathItemCount: 5
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: 280
+        highlightMoveDuration: 250
+        snapMode: PathView.SnapToItem
         
         path: Path {
             startX: -pathView.width * 0.3
             startY: pathView.height / 2
             
-            PathAttribute { name: "itemScale"; value: 0.6 }
-            PathAttribute { name: "itemOpacity"; value: 0.3 }
+            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
             
             PathLine { x: pathView.width / 2; y: pathView.height / 2 }
@@ -117,53 +107,51 @@ Item {
             
             PathLine { x: pathView.width * 1.3; y: pathView.height / 2 }
             
-            PathAttribute { name: "itemScale"; value: 0.6 }
-            PathAttribute { name: "itemOpacity"; value: 0.3 }
+            PathAttribute { name: "itemScale"; value: 0.55 }
+            PathAttribute { name: "itemOpacity"; value: 0.35 }
             PathAttribute { name: "itemZ"; value: 0 }
         }
         
         delegate: Item {
             id: delegateItem
-            width: pathView.width * 0.38
-            height: pathView.height * 0.8
+            width: pathView.width * 0.42
+            height: pathView.height * 0.85
             
-            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.6
-            opacity: PathView.itemOpacity !== undefined ? PathView.itemOpacity : 0.3
-            z: PathView.itemZ !== undefined ? PathView.itemZ : 0
+            property bool isCurrent: PathView.isCurrentItem
             
-            // Получаем данные темы из themeManager
             property var themeData: {
-                if (root.themeManager && root.themeManager.themes) {
-                    for (var i = 0; i < root.themeManager.themes.length; i++) {
-                        if (root.themeManager.themes[i].file === modelData) {
-                            return root.themeManager.themes[i]
-                        }
+                if (!root.themeManager || !root.themeManager.themes) return null
+                for (var i = 0; i < root.themeManager.themes.length; i++) {
+                    if (root.themeManager.themes[i].file === modelData) {
+                        return root.themeManager.themes[i]
                     }
                 }
                 return null
             }
             
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width - 4
-                height: parent.height - 4
-                radius: 16
-                color: Qt.rgba(0, 0, 0, 0.5)
-                y: parent.y + 8
-                opacity: PathView.isCurrentItem ? 0.7 : 0.25
-            }
-
+            property color bgColor: themeData && themeData.colors ? themeData.colors.background : "#181818"
+            property color surfColor: themeData && themeData.colors ? themeData.colors.surface : "#1A1F26"
+            property color tAccentColor: themeData && themeData.colors ? themeData.colors.accent : "#5B9BFF"
+            property color tTextColor: themeData && themeData.colors ? themeData.colors.text : "#FFFFFF"
+            property color tTextSecColor: themeData && themeData.colors ? themeData.colors.textSecondary : "#AAAAAA"
+            property color tTextSelColor: themeData && themeData.colors ? themeData.colors.textSelected : "#FFFFFF"
+            property string themeName: themeData && themeData.name ? themeData.name : modelData
+            property bool isCurrentTheme: root.themeManager && root.themeManager.currentTheme === modelData
+            
+            scale: PathView.itemScale !== undefined ? PathView.itemScale : 0.55
+            opacity: PathView.itemOpacity !== undefined ? PathView.itemOpacity : 0.35
+            z: PathView.itemZ !== undefined ? PathView.itemZ : 0
+            
             Rectangle {
                 id: card
                 anchors.fill: parent
-                radius: 14
-                color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                       delegateItem.themeData.colors.surface : "#2A2A35"
-                border.width: PathView.isCurrentItem ? 2 : 1
-                border.color: PathView.isCurrentItem ? 
-                               (delegateItem.themeData && delegateItem.themeData.colors ? 
-                                delegateItem.themeData.colors.accent : "#5B9BFF") : 
-                               Qt.rgba(1, 1, 1, 0.15)
+                radius: 16
+                color: surfColor
+                border.width: isCurrent ? 2 : 1
+                border.color: isCurrent ? tAccentColor : Qt.rgba(1, 1, 1, 0.15)
+                
+                Behavior on border.width { NumberAnimation { duration: 180 } }
+                Behavior on border.color { ColorAnimation { duration: 180 } }
                 
                 // Превью темы
                 Rectangle {
@@ -171,96 +159,90 @@ Item {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.topMargin: 10
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    height: parent.height * 0.5
-                    radius: 8
-                    color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                           delegateItem.themeData.colors.background : "#181818"
+                    anchors.topMargin: 12
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    height: parent.height * 0.46
+                    radius: 10
+                    color: bgColor
                     clip: true
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.1)
 
                     // Мини топбар
                     Rectangle {
                         anchors.top: parent.top
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        height: 16
-                        color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                               delegateItem.themeData.colors.surface : "#1A1F26"
+                        height: 20
+                        color: surfColor
 
                         Row {
                             anchors.left: parent.left
-                            anchors.leftMargin: 5
+                            anchors.leftMargin: 6
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 3
+                            spacing: 4
 
                             Repeater {
                                 model: 3
                                 delegate: Rectangle {
-                                    width: 5
-                                    height: 5
-                                    radius: 2.5
-                                    color: index === 0 ? 
-                                           (delegateItem.themeData && delegateItem.themeData.colors ? 
-                                            delegateItem.themeData.colors.accent : "#5B9BFF") : 
-                                           Qt.rgba(1,1,1,0.2)
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: index === 0 ? tAccentColor : Qt.rgba(1, 1, 1, 0.25)
                                 }
                             }
                         }
 
                         Text {
                             anchors.right: parent.right
-                            anchors.rightMargin: 5
+                            anchors.rightMargin: 6
                             anchors.verticalCenter: parent.verticalCenter
                             text: "12:00"
-                            color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                                   delegateItem.themeData.colors.text : "#FFF"
-                            font.pixelSize: 6
+                            color: tTextColor
+                            font.pixelSize: 8
                             font.bold: true
+                            font.family: "JetBrains Mono"
                         }
                     }
 
                     Column {
                         anchors.top: parent.bottom
-                        anchors.topMargin: -parent.height + 20
+                        anchors.topMargin: -parent.height + 26
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.margins: 7
-                        spacing: 4
+                        anchors.margins: 9
+                        spacing: 5
 
                         Rectangle {
-                            width: parent.width * 0.7
-                            height: 7
-                            radius: 3.5
-                            color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                                   delegateItem.themeData.colors.text : "#FFF"
-                            opacity: 0.8
+                            width: parent.width * 0.72
+                            height: 8
+                            radius: 4
+                            color: tTextColor
+                            opacity: 0.9
                         }
 
                         Rectangle {
-                            width: parent.width * 0.5
-                            height: 5
-                            radius: 2.5
-                            color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                                   delegateItem.themeData.colors.textSecondary : "#AAA"
-                            opacity: 0.6
+                            width: parent.width * 0.52
+                            height: 6
+                            radius: 3
+                            color: tTextSecColor
+                            opacity: 0.7
                         }
 
                         Rectangle {
-                            width: 36
-                            height: 12
-                            radius: 6
-                            color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                                   delegateItem.themeData.colors.accent : "#5B9BFF"
+                            width: 44
+                            height: 15
+                            radius: 7.5
+                            color: tAccentColor
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "Button"
-                                color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                                       delegateItem.themeData.colors.textSelected : "#FFF"
-                                font.pixelSize: 5
+                                color: tTextSelColor
+                                font.pixelSize: 7
                                 font.bold: true
+                                font.family: "JetBrains Mono"
                             }
                         }
                     }
@@ -271,77 +253,71 @@ Item {
                     id: themeNameText
                     anchors.top: previewArea.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.topMargin: 6
-                    text: delegateItem.themeData && delegateItem.themeData.name ? 
-                          delegateItem.themeData.name : modelData
-                    color: delegateItem.themeData && delegateItem.themeData.colors ? 
-                           delegateItem.themeData.colors.text : "#FFF"
-                    font.pixelSize: 12
+                    anchors.topMargin: 8
+                    text: themeName
+                    color: tTextColor
+                    font.pixelSize: 13
                     font.bold: true
+                    font.family: "JetBrains Mono"
                 }
 
                 // Цветовая палитра
                 Row {
                     anchors.top: themeNameText.bottom
-                    anchors.topMargin: 4
+                    anchors.topMargin: 5
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 4
+                    spacing: 5
 
                     Repeater {
-                        model: delegateItem.themeData && delegateItem.themeData.colors ? 
-                               [
-                                   delegateItem.themeData.colors.background,
-                                   delegateItem.themeData.colors.surface,
-                                   delegateItem.themeData.colors.accent,
-                                   delegateItem.themeData.colors.text
-                               ] : []
+                        model: themeData && themeData.colors ? 
+                               [bgColor, surfColor, tAccentColor, tTextColor] : []
                         delegate: Rectangle {
-                            width: 10
-                            height: 10
-                            radius: 5
-                            color: modelData || "#888"
+                            width: 12
+                            height: 12
+                            radius: 6
+                            color: modelData
                             border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.15)
+                            border.color: Qt.rgba(1, 1, 1, 0.2)
                         }
                     }
                 }
 
-                // Индикатор текущей темы
+                // Плашка статуса
                 Rectangle {
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: 6
-                    width: currentLabel.width + 12
-                    height: 16
-                    radius: 8
-                    color: root.themeManager && root.themeManager.currentTheme === modelData ?
-                           (delegateItem.themeData && delegateItem.themeData.colors ? 
-                            delegateItem.themeData.colors.accent : "#5B9BFF") :
-                           Qt.rgba(0, 0, 0, 0.3)
-                    opacity: PathView.isCurrentItem ? 1 : 0
-
+                    anchors.bottomMargin: 10
+                    width: currentLabel.width + 20
+                    height: 22
+                    radius: 11
+                    color: isCurrentTheme ? tAccentColor : Qt.rgba(0, 0, 0, 0.4)
+                    border.width: isCurrentTheme ? 0 : 1
+                    border.color: Qt.rgba(1, 1, 1, 0.15)
+                    opacity: isCurrent ? 1 : 0
+                    scale: isCurrent ? 1 : 0.9
+                    
                     Behavior on opacity { NumberAnimation { duration: 200 } }
-
+                    Behavior on scale { NumberAnimation { duration: 200 } }
+                    
                     Text {
                         id: currentLabel
                         anchors.centerIn: parent
-                        text: root.themeManager && root.themeManager.currentTheme === modelData ? 
-                              "✓ Current" : "↵ Apply"
-                        color: root.themeManager && root.themeManager.currentTheme === modelData ?
-                               (delegateItem.themeData && delegateItem.themeData.colors ? 
-                                delegateItem.themeData.colors.textSelected : "#FFF") : "#FFF"
-                        font.pixelSize: 8
+                        text: isCurrentTheme ? "✓ Current" : "↵ Apply"
+                        color: isCurrentTheme ? tTextSelColor : "#FFFFFF"
+                        font.pixelSize: 10
                         font.bold: true
+                        font.family: "JetBrains Mono"
                     }
                 }
                 
                 MouseArea {
+                    id: cardMouse
                     anchors.fill: parent
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (PathView.isCurrentItem) {
-                            applyProcess.themeName = modelData
-                            applyProcess.running = true
+                        if (isCurrent) {
+                            Quickshell.execDetached(["qs", "-c", "themepicker", "ipc", "call", "themepicker", "applyTheme", modelData])
                             if (root.soundManager) root.soundManager.play("quick_click.wav")
                             root.close()
                         } else {
@@ -354,16 +330,11 @@ Item {
         
         onCurrentIndexChanged: {
             root.currentIndex = currentIndex
-            
-            // Пропускаем первое срабатывание (позиционирование при открытии)
             if (root.isFirstChange) {
                 root.isFirstChange = false
                 return
             }
-            
-            if (root.soundManager) {
-                root.soundManager.play("in.wav")
-            }
+            if (root.soundManager) root.soundManager.play("in.wav")
         }
     }
 
@@ -372,10 +343,10 @@ Item {
         anchors.left: parent.left
         anchors.top: pathView.top
         anchors.bottom: pathView.bottom
-        width: 40
+        width: 70
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: root.theme.colors.surface }
+            GradientStop { position: 0.0; color: root.surfaceColor }
             GradientStop { position: 1.0; color: "transparent" }
         }
     }
@@ -384,30 +355,32 @@ Item {
         anchors.right: parent.right
         anchors.top: pathView.top
         anchors.bottom: pathView.bottom
-        width: 40
+        width: 70
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 1.0; color: root.theme.colors.surface }
+            GradientStop { position: 1.0; color: root.surfaceColor }
         }
     }
 
-    // Стрелка влево (ЗВУК УБРАН — теперь в onCurrentIndexChanged)
+    // Стрелка влево
     Rectangle {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 8
-        width: 32
-        height: 32
-        radius: 16
-        color: leftMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+        anchors.leftMargin: 12
+        width: 36
+        height: 36
+        radius: 18
+        color: leftMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.1)
         Behavior on color { ColorAnimation { duration: 150 } }
         
         Text {
             anchors.centerIn: parent
             text: "‹"
-            color: root.theme.colors.text || "#FFF"
-            font.pixelSize: 26
+            color: root.textColor
+            font.pixelSize: 28
             font.bold: true
         }
         
@@ -416,28 +389,28 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                pathView.decrementCurrentIndex()
-            }
+            onClicked: pathView.decrementCurrentIndex()
         }
     }
 
-    // Стрелка вправо (ЗВУК УБРАН — теперь в onCurrentIndexChanged)
+    // Стрелка вправо
     Rectangle {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.rightMargin: 8
-        width: 32
-        height: 32
-        radius: 16
-        color: rightMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+        anchors.rightMargin: 12
+        width: 36
+        height: 36
+        radius: 18
+        color: rightMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.3)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.1)
         Behavior on color { ColorAnimation { duration: 150 } }
         
         Text {
             anchors.centerIn: parent
             text: "›"
-            color: root.theme.colors.text || "#FFF"
-            font.pixelSize: 26
+            color: root.textColor
+            font.pixelSize: 28
             font.bold: true
         }
         
@@ -446,9 +419,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                pathView.incrementCurrentIndex()
-            }
+            onClicked: pathView.incrementCurrentIndex()
         }
     }
 
@@ -456,39 +427,32 @@ Item {
     Row {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 10
-        spacing: 7
+        anchors.bottomMargin: 14
+        spacing: 8
         
         Repeater {
             model: Math.min(root.themesList.length, 15)
             delegate: Rectangle {
                 property bool isActive: index === root.currentIndex
-                width: isActive ? 18 : 6
+                width: isActive ? 22 : 6
                 height: 6
                 radius: 3
-                color: isActive ? 
-                       (root.theme.colors.accent || "#5B9BFF") : 
-                       (root.theme.colors.textSecondary || "#AAA")
-                opacity: isActive ? 1 : 0.35
-                Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                color: isActive ? root.accentColor : root.textSecondaryColor
+                opacity: isActive ? 1 : 0.4
+                Behavior on width { NumberAnimation { duration: 280; easing.type: Easing.OutQuart } }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
+                Behavior on color { ColorAnimation { duration: 200 } }
             }
         }
     }
 
-    function navigateLeft() {
-        pathView.decrementCurrentIndex()
-    }
-    
-    function navigateRight() {
-        pathView.incrementCurrentIndex()
-    }
+    function navigateLeft() { pathView.decrementCurrentIndex() }
+    function navigateRight() { pathView.incrementCurrentIndex() }
     
     function applyCurrent() {
         if (themesList.length > 0) {
             var fileName = themesList[currentIndex]
-            applyProcess.themeName = fileName
-            applyProcess.running = true
+            Quickshell.execDetached(["qs", "-c", "themepicker", "ipc", "call", "themepicker", "applyTheme", fileName])
             if (soundManager) soundManager.play("quick_click.wav")
             close()
         }

@@ -168,6 +168,9 @@ PanelWindow {
         anchors.topMargin: root.topMargin
         
         width: {
+            // === НОВОЕ: Расширение при активной записи ===
+            if (root.screenRecording) return root.centerExpandedWidth
+            
             switch (root.currentMode) {
                 case root.modeTimerFinished: return root.timerFinishedWidth
                 case root.modeLauncher: return root.launcherWidth
@@ -231,6 +234,7 @@ PanelWindow {
         
         MouseArea {
             anchors.fill: parent
+            // === ИСПРАВЛЕНО: Отключаем при активной записи (чтобы клик по бейджу не открывал попап) ===
             enabled: !root.anyModeActive
             cursorShape: Qt.PointingHandCursor
             
