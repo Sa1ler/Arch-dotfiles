@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -55,10 +54,17 @@ ShellRoot {
         anchors.right: true
         
         Component.onCompleted: {
-            console.log("LayerShell wallpaper created, maxRadius:", root.maxRadius)
+            console.log("LayerShell wallpaper created")
         }
         
-        // Старое изображение
+        Connections {
+            target: root
+            function onRevealRadiusChanged() {
+                revealCanvas.requestPaint()
+            }
+        }
+        
+        // Старое изображение (БЕЗ sourceSize — оригинальный размер)
         Image {
             id: currentImage
             anchors.fill: parent
@@ -73,66 +79,87 @@ ShellRoot {
             }
         }
         
-        // Новое изображение с круговой маской
+        // Скрытое новое изображение (БЕЗ sourceSize, БЕЗ явных размеров)
         Image {
-            id: nextImage
-            anchors.fill: parent
+            id: hiddenNextImage
+            visible: false
             source: root.nextWallpaperPath !== "" ? "file://" + root.nextWallpaperPath : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             smooth: true
             asynchronous: true
-            visible: root.isTransitioning
             
             onStatusChanged: {
-                console.log("Next image status:", status)
+                console.log("Hidden next image status:", status)
                 if (status === Image.Ready && root.isTransitioning) {
                     console.log("Next image ready, starting reveal")
                     root.startReveal()
                 }
             }
-            
-            // Круговая маска через OpacityMask
-            layer.enabled: true
-            layer.effect: OpacityMask {
-                maskSource: maskItem
-            }
         }
         
-        // Маска (расширяющийся круг)
-        Item {
-            id: maskItem
-            width: nextImage.width
-            height: nextImage.height
-            visible: false
+        // Canvas с круговой маской
+        Canvas {
+            id: revealCanvas
+            anchors.fill: parent
+            visible: root.isTransitioning
+            antialiasing: true
+            renderTarget: Canvas.FramebufferObject
+            renderStrategy: Canvas.Immediate
             
-            Rectangle {
-                id: maskCircle
-                width: root.revealRadius * 2
-                height: root.revealRadius * 2
-                radius: root.revealRadius
-                color: "white"
-                x: (maskItem.width - width) / 2
-                y: (maskItem.height - height) / 2
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            
+            onPaint: {
+                var ctx = getContext("2d")
+                ctx.clearRect(0, 0, width, height)
+                
+                if (hiddenNextImage.status !== Image.Ready) return
+                if (root.revealRadius <= 0) return
+                
+                var cx = width / 2
+                var cy = height / 2
+                var r = root.revealRadius
+                
+                // PreserveAspectCrop логика (как у currentImage)
+                var imgW = hiddenNextImage.sourceSize.width
+                var imgH = hiddenNextImage.sourceSize.height
+                var imgRatio = imgW / imgH
+                var canvasRatio = width / height
+                var drawW, drawH, drawX, drawY
+                
+                if (imgRatio > canvasRatio) {
+                    drawH = height
+                    drawW = height * imgRatio
+                    drawX = (width - drawW) / 2
+                    drawY = 0
+                } else {
+                    drawW = width
+                    drawH = width / imgRatio
+                    drawX = 0
+                    drawY = (height - drawH) / 2
+                }
+                
+                ctx.save()
+                ctx.beginPath()
+                ctx.arc(cx, cy, r, 0, Math.PI * 2)
+                ctx.clip()
+                
+                ctx.drawImage(hiddenNextImage, drawX, drawY, drawW, drawH)
+                
+                ctx.restore()
+                
+                if (root.isTransitioning) {
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+                    ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.3).toString()
+                    ctx.lineWidth = 3
+                    ctx.stroke()
+                }
             }
-        }
-        
-        // Светлая окружность по краю раскрытия
-        Rectangle {
-            id: glowCircle
-            width: root.revealRadius * 2
-            height: root.revealRadius * 2
-            radius: root.revealRadius
-            color: "transparent"
-            border.width: 3
-            border.color: Qt.rgba(1, 1, 1, 0.3)
-            x: (wallpaperWindow.width - width) / 2
-            y: (wallpaperWindow.height - height) / 2
-            visible: root.isTransitioning && root.revealRadius > 0
         }
     }
 
-    // Анимация раскрытия круга
     NumberAnimation {
         id: revealAnimation
         target: root
@@ -148,7 +175,6 @@ ShellRoot {
         }
     }
     
-    // Затемнение старых обоев
     NumberAnimation {
         id: dimAnimation
         target: currentImage
@@ -160,8 +186,9 @@ ShellRoot {
     }
 
     function startReveal() {
-        console.log("Starting reveal animation")
+        console.log("Starting reveal animation, maxRadius:", root.maxRadius)
         root.revealRadius = 0
+        revealCanvas.requestPaint()
         dimAnimation.start()
         revealAnimation.start()
     }
@@ -171,19 +198,20 @@ ShellRoot {
         root.nextWallpaperPath = ""
         root.isTransitioning = false
         root.revealRadius = 0
-        currentImage.opacity = 1.0
         
+        currentImage.opacity = 1.0
         console.log("Reveal finished, new wallpaper:", root.currentWallpaperPath)
     }
 
     function cancelReveal() {
-        console.log("Cancelling reveal")
+        console.log("Cancelling reveal without swap")
         revealAnimation.stop()
         dimAnimation.stop()
         root.isTransitioning = false
         root.revealRadius = 0
         root.nextWallpaperPath = ""
         currentImage.opacity = 1.0
+        revealCanvas.requestPaint()
     }
 
     function applyWallpaper(fileName) {
@@ -221,7 +249,7 @@ ShellRoot {
         root.nextWallpaperPath = path
         console.log("Set nextWallpaperPath to:", path)
         
-        if (nextImage.status === Image.Ready) {
+        if (hiddenNextImage.status === Image.Ready) {
             console.log("Image already loaded, starting reveal")
             root.startReveal()
         } else {

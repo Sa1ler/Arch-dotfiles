@@ -23,12 +23,12 @@ Item {
     signal close()
 
     opacity: active ? 1 : 0
-    scale: active ? 1 : 0.92
-    y: active ? 0 : -25
+    scale: active ? 1 : 0.94
+    y: active ? 0 : -20
     
-    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
-    Behavior on scale { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
-    Behavior on y { NumberAnimation { duration: 380; easing.type: Easing.OutQuint } }
+    Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutQuint } }
+    Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutQuint } }
 
     Process {
         id: loadWallpapers
@@ -78,9 +78,7 @@ Item {
         font.family: "CaskaydiaCove Nerd Font"
         
         opacity: active ? 1 : 0
-        y: active ? 0 : -10
-        Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
-        Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: 250 } }
     }
 
     PathView {
@@ -99,7 +97,7 @@ Item {
         pathItemCount: 5
         preferredHighlightBegin: 0.5
         preferredHighlightEnd: 0.5
-        highlightMoveDuration: 420
+        highlightMoveDuration: 300
         snapMode: PathView.SnapToItem
         
         path: Path {
@@ -135,27 +133,24 @@ Item {
             opacity: PathView.itemOpacity !== undefined ? PathView.itemOpacity : 0.35
             z: PathView.itemZ !== undefined ? PathView.itemZ : 0
             
-            rotation: isHovered && !isCurrent ? (cardMouse.mouseX - width/2) * 0.02 : 0
-            Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            
             Rectangle {
                 id: card
                 anchors.fill: parent
-                radius: 18
+                radius: 0
                 color: "#2A2A35"
                 border.width: isCurrent ? 2 : 1
                 border.color: isCurrent ? root.accentColor : Qt.rgba(1, 1, 1, 0.1)
                 clip: true
                 
-                Behavior on border.width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                Behavior on border.color { ColorAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Behavior on border.width { NumberAnimation { duration: 180 } }
+                Behavior on border.color { ColorAnimation { duration: 180 } }
                 
-                // Контейнер изображения
+                // === Контейнер изображения (прямоугольный) ===
                 Rectangle {
                     id: imageContainer
                     anchors.fill: parent
                     anchors.margins: 4
-                    radius: 14
+                    radius: 0
                     clip: true
                     color: surfaceColor
                     
@@ -202,11 +197,11 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        height: 52
+                        height: 56
                         
                         gradient: Gradient {
                             GradientStop { position: 0.0; color: "transparent" }
-                            GradientStop { position: 0.3; color: Qt.rgba(0, 0, 0, 0.25) }
+                            GradientStop { position: 0.3; color: Qt.rgba(0, 0, 0, 0.2) }
                             GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.88) }
                         }
                         
@@ -219,12 +214,12 @@ Item {
                             radius: 13
                             color: root.accentColor
                             opacity: isCurrent ? 1 : 0
-                            scale: isCurrent ? 1 : 0.5
+                            scale: isCurrent ? 1 : 0.3
                             
-                            Behavior on opacity { NumberAnimation { duration: 220 } }
+                            Behavior on opacity { NumberAnimation { duration: 180 } }
                             Behavior on scale { 
                                 NumberAnimation { 
-                                    duration: 280
+                                    duration: 220
                                     easing.type: Easing.OutBack
                                     easing.overshoot: 1.5
                                 } 
@@ -259,13 +254,9 @@ Item {
                             elide: Text.ElideRight
                             opacity: isCurrent ? 1 : (isHovered ? 0.9 : 0.6)
                             
-                            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: 180 } }
                             Behavior on anchors.leftMargin { 
-                                NumberAnimation { 
-                                    duration: 280
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.2
-                                } 
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic } 
                             }
                         }
                     }
@@ -275,7 +266,25 @@ Item {
                         anchors.fill: parent
                         color: Qt.rgba(0, 0, 0, 0.15)
                         opacity: isHovered && !isCurrent ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 220 } }
+                        Behavior on opacity { NumberAnimation { duration: 180 } }
+                    }
+                    
+                    // Вспышка при применении
+                    Rectangle {
+                        id: flashEffect
+                        anchors.fill: parent
+                        color: "#FFFFFF"
+                        opacity: 0
+                        
+                        function flash() {
+                            flashAnimation.restart()
+                        }
+                        
+                        SequentialAnimation {
+                            id: flashAnimation
+                            NumberAnimation { target: flashEffect; property: "opacity"; to: 0.3; duration: 80 }
+                            NumberAnimation { target: flashEffect; property: "opacity"; to: 0; duration: 180 }
+                        }
                     }
                 }
                 
@@ -287,6 +296,7 @@ Item {
                     
                     onClicked: {
                         if (isCurrent) {
+                            flashEffect.flash()
                             var fileName = modelData
                             var lastSlash = fileName.lastIndexOf('/')
                             if (lastSlash !== -1) fileName = fileName.substring(lastSlash + 1)
@@ -300,10 +310,12 @@ Item {
                     
                     onPressedChanged: {
                         if (isCurrent) {
-                            card.scale = pressed ? 0.98 : 1.0
+                            card.scale = pressed ? 0.97 : 1.0
                         }
                     }
                 }
+                
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
             }
         }
         
@@ -352,11 +364,11 @@ Item {
         font.family: "CaskaydiaCove Nerd Font"
         opacity: leftMouse.containsMouse ? 1 : 0.4
         x: leftMouse.containsMouse ? -3 : 0
-        scale: leftMouse.pressed ? 0.9 : 1.0
+        scale: leftMouse.pressed ? 0.88 : 1.0
         
-        Behavior on opacity { NumberAnimation { duration: 180 } }
-        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 120 } }
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         
         MouseArea {
             id: leftMouse
@@ -379,11 +391,11 @@ Item {
         font.family: "CaskaydiaCove Nerd Font"
         opacity: rightMouse.containsMouse ? 1 : 0.4
         x: rightMouse.containsMouse ? 3 : 0
-        scale: rightMouse.pressed ? 0.9 : 1.0
+        scale: rightMouse.pressed ? 0.88 : 1.0
         
-        Behavior on opacity { NumberAnimation { duration: 180 } }
-        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 120 } }
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         
         MouseArea {
             id: rightMouse
@@ -402,19 +414,19 @@ Item {
         spacing: 8
         
         opacity: active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 320 } }
+        Behavior on opacity { NumberAnimation { duration: 250 } }
         
         Repeater {
             model: Math.min(root.wallpaperList.length, 10)
             delegate: Rectangle {
                 property bool isActive: index === root.currentIndex
-                width: isActive ? 18 : 6
+                width: isActive ? 20 : 6
                 height: 6
                 radius: 3
                 color: isActive ? root.accentColor : Qt.rgba(1, 1, 1, 0.25)
                 
-                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutQuint } }
-                Behavior on color { ColorAnimation { duration: 260 } }
+                Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 220 } }
                 
                 MouseArea {
                     anchors.fill: parent

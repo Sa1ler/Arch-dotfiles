@@ -60,7 +60,6 @@ qt6-imageformats
 qt6-quick3d
 qt6-virtualkeyboard
 qt6-wayland
-rofi
 rsync
 sddm
 slurp
@@ -85,6 +84,7 @@ wget
 wireless_tools
 wireplumber
 wpa_supplicant
+xclip
 xdg-desktop-portal-hyprland
 xdg-utils
 xorg-server
