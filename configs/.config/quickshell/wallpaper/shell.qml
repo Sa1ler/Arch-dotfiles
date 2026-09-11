@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -12,11 +12,7 @@ ShellRoot {
     property string nextWallpaperPath: ""
     property bool isTransitioning: false
     
-    property real revealRadius: 0
-    property real maxRadius: Math.sqrt(
-        Math.pow(wallpaperWindow.width / 2, 2) + 
-        Math.pow(wallpaperWindow.height / 2, 2)
-    ) * 1.05
+    property real wipeProgress: 0
 
     ThemeManager {
         id: themeManager
@@ -32,7 +28,6 @@ ShellRoot {
         onLoaded: {
             var saved = savedWallpaperFile.text().trim()
             if (saved !== "" && saved !== root.currentWallpaperPath) {
-                console.log("Loaded saved wallpaper:", saved)
                 root.applyWallpaperDirect(saved)
             }
         }
@@ -54,11 +49,6 @@ ShellRoot {
         anchors.left: true
         anchors.right: true
         
-        Component.onCompleted: {
-            console.log("LayerShell wallpaper created, maxRadius:", root.maxRadius)
-        }
-        
-        // Старое изображение
         Image {
             id: currentImage
             anchors.fill: parent
@@ -67,13 +57,8 @@ ShellRoot {
             cache: true
             smooth: true
             asynchronous: true
-            
-            onStatusChanged: {
-                console.log("Current image status:", status)
-            }
         }
         
-        // Новое изображение с круговой маской
         Image {
             id: nextImage
             anchors.fill: parent
@@ -85,147 +70,134 @@ ShellRoot {
             visible: root.isTransitioning
             
             onStatusChanged: {
-                console.log("Next image status:", status)
                 if (status === Image.Ready && root.isTransitioning) {
-                    console.log("Next image ready, starting reveal")
-                    root.startReveal()
+                    root.startWipe()
                 }
             }
             
-            // Круговая маска через OpacityMask
             layer.enabled: true
-            layer.effect: OpacityMask {
+            layer.effect: MultiEffect {
+                maskEnabled: true
                 maskSource: maskItem
+                maskThresholdMin: 0.0
+                maskSpreadAtMin: 0.0
             }
         }
         
-        // Маска (расширяющийся круг)
+        // Маска — прямоугольник, расширяющийся из центра
         Item {
             id: maskItem
             width: nextImage.width
             height: nextImage.height
             visible: false
+            layer.enabled: true
             
             Rectangle {
-                id: maskCircle
-                width: root.revealRadius * 2
-                height: root.revealRadius * 2
-                radius: root.revealRadius
+                id: maskRect
+                width: root.wipeProgress * maskItem.width
+                height: maskItem.height
                 color: "white"
-                x: (maskItem.width - width) / 2
-                y: (maskItem.height - height) / 2
+                x: (maskItem.width - width) / 2  // Центрирование
+                y: 0
             }
         }
         
-        // Светлая окружность по краю раскрытия
+        // Две светлые полоски по краям
         Rectangle {
-            id: glowCircle
-            width: root.revealRadius * 2
-            height: root.revealRadius * 2
-            radius: root.revealRadius
-            color: "transparent"
-            border.width: 3
-            border.color: Qt.rgba(1, 1, 1, 0.3)
-            x: (wallpaperWindow.width - width) / 2
-            y: (wallpaperWindow.height - height) / 2
-            visible: root.isTransitioning && root.revealRadius > 0
+            id: glowLeft
+            width: 3
+            height: wallpaperWindow.height
+            color: Qt.rgba(1, 1, 1, 0.4)
+            x: (wallpaperWindow.width - root.wipeProgress * wallpaperWindow.width) / 2 - 1.5
+            y: 0
+            visible: root.isTransitioning && root.wipeProgress > 0 && root.wipeProgress < 1
+        }
+        
+        Rectangle {
+            id: glowRight
+            width: 3
+            height: wallpaperWindow.height
+            color: Qt.rgba(1, 1, 1, 0.4)
+            x: (wallpaperWindow.width + root.wipeProgress * wallpaperWindow.width) / 2 - 1.5
+            y: 0
+            visible: root.isTransitioning && root.wipeProgress > 0 && root.wipeProgress < 1
         }
     }
 
-    // Анимация раскрытия круга
     NumberAnimation {
-        id: revealAnimation
+        id: wipeAnimation
         target: root
-        property: "revealRadius"
+        property: "wipeProgress"
         from: 0
-        to: root.maxRadius
-        duration: 800
-        easing.type: Easing.OutCubic
+        to: 1
+        duration: 700
+        easing.type: Easing.InOutQuart
         
         onStopped: {
-            console.log("Reveal complete, swapping images")
-            root.finishReveal()
+            root.finishWipe()
         }
     }
     
-    // Затемнение старых обоев
     NumberAnimation {
         id: dimAnimation
         target: currentImage
         property: "opacity"
         from: 1.0
-        to: 0.7
+        to: 0.8
         duration: 400
         easing.type: Easing.OutCubic
     }
 
-    function startReveal() {
-        console.log("Starting reveal animation")
-        root.revealRadius = 0
+    function startWipe() {
+        root.wipeProgress = 0
         dimAnimation.start()
-        revealAnimation.start()
+        wipeAnimation.start()
     }
 
-    function finishReveal() {
+    function finishWipe() {
         root.currentWallpaperPath = root.nextWallpaperPath
         root.nextWallpaperPath = ""
         root.isTransitioning = false
-        root.revealRadius = 0
+        root.wipeProgress = 0
         currentImage.opacity = 1.0
-        
-        console.log("Reveal finished, new wallpaper:", root.currentWallpaperPath)
     }
 
-    function cancelReveal() {
-        console.log("Cancelling reveal")
-        revealAnimation.stop()
+    function cancelWipe() {
+        wipeAnimation.stop()
         dimAnimation.stop()
         root.isTransitioning = false
-        root.revealRadius = 0
         root.nextWallpaperPath = ""
+        root.wipeProgress = 0
         currentImage.opacity = 1.0
     }
 
     function applyWallpaper(fileName) {
-        console.log("applyWallpaper called with:", fileName)
         var fullPath = "/home/graff/.config/hypr/walls/" + fileName
         savedWallpaperFile.setText(fullPath)
         root.applyWallpaperWithTransition(fullPath)
     }
 
     function applyWallpaperDirect(path) {
-        console.log("applyWallpaperDirect called with:", path)
         root.applyWallpaperWithTransition(path)
     }
 
     function applyWallpaperWithTransition(path) {
-        console.log("applyWallpaperWithTransition called with:", path)
-        
         if (root.currentWallpaperPath === "") {
-            console.log("First wallpaper, setting directly")
             root.currentWallpaperPath = path
             return
         }
         
-        if (root.currentWallpaperPath === path) {
-            console.log("Same wallpaper, skipping")
-            return
-        }
+        if (root.currentWallpaperPath === path) return
         
         if (root.isTransitioning) {
-            console.log("Cancelling previous reveal")
-            root.cancelReveal()
+            root.cancelWipe()
         }
         
         root.isTransitioning = true
         root.nextWallpaperPath = path
-        console.log("Set nextWallpaperPath to:", path)
         
         if (nextImage.status === Image.Ready) {
-            console.log("Image already loaded, starting reveal")
-            root.startReveal()
-        } else {
-            console.log("Waiting for image to load...")
+            root.startWipe()
         }
     }
 
@@ -233,12 +205,7 @@ ShellRoot {
         target: "wallpaper"
         
         function applyWallpaper(fileName: string) {
-            console.log("IPC applyWallpaper received:", fileName)
             root.applyWallpaper(fileName)
         }
-    }
-
-    Component.onCompleted: {
-        console.log("ShellRoot completed")
     }
 }
