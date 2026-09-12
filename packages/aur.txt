@@ -1,3 +1,4 @@
+happ-desktop-bin
 peaclock
 peaclock-debug
 quickshell-git

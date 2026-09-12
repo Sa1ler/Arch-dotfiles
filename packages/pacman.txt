@@ -47,6 +47,7 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 polkit-kde-agent
+python-pam
 python-pip
 python-pipx
 python-pyqt5
