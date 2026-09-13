@@ -13,18 +13,31 @@ Item {
     property bool wifiEnabled: false
     property bool bluetoothEnabled: false
     property bool dndEnabled: false
+    property bool nightModeEnabled: false
     property string wifiSsid: ""
 
     readonly property string dndFile: Quickshell.shellDir + "/../notification-dnd"
+    readonly property string nightModeFile: Quickshell.shellDir + "/../night-mode"
     readonly property int blockHeight: 66
     implicitHeight: blockHeight
+    
+    // Температура ночного режима
+    readonly property int nightTemp: 4700
+    readonly property int normalTemp: 6500
 
     FileView {
         id: dndFileWriter
         path: root.dndFile
         printErrors: false
     }
+    
+    FileView {
+        id: nightModeFileWriter
+        path: root.nightModeFile
+        printErrors: false
+    }
 
+    // === WiFi ===
     Process {
         id: wifiStatus
         command: ["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"]
@@ -64,6 +77,7 @@ Item {
         }
     }
 
+    // === Bluetooth ===
     Process {
         id: bluetoothStatus
         command: ["bluetoothctl", "show"]
@@ -90,6 +104,7 @@ Item {
         }
     }
 
+    // === DND ===
     function toggleDnd() {
         var newState = !root.dndEnabled
         root.dndEnabled = newState
@@ -105,7 +120,83 @@ Item {
         })
         root.dndStateChanged(newState)
     }
+    
+    // === Ночной режим (wl-gammarelay-rs) ===
+    
+    // Проверка текущей температуры через D-Bus
+    Process {
+        id: nightModeCheck
+        command: ["busctl", "--user", "get-property", "rs.wl-gammarelay", "/", "rs.wl.gammarelay", "Temperature"]
+        
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var output = text.trim()
+                if (output.length > 0) {
+                    var match = output.match(/(\d+)/)
+                    if (match) {
+                        var temp = parseInt(match[1])
+                        root.nightModeEnabled = temp < root.normalTemp
+                    } else {
+                        root.nightModeEnabled = false
+                    }
+                } else {
+                    root.nightModeEnabled = false
+                }
+            }
+        }
+    }
+    
+    // Запуск демона если не запущен
+    Process {
+        id: gammaRelayStart
+        command: ["sh", "-c", "pgrep -x wl-gammarelay-rs || wl-gammarelay-rs &"]
+    }
+    
+    function enableNightMode() {
+        // Убеждаемся что демон запущен
+        gammaRelayStart.running = true
+        
+        // Устанавливаем тёплую температуру через D-Bus (set-property)
+        Quickshell.execDetached([
+            "busctl", "--user", "set-property", 
+            "rs.wl-gammarelay", "/", "rs.wl.gammarelay", 
+            "Temperature", "q", String(root.nightTemp)
+        ])
+    }
+    
+    function disableNightMode() {
+        // Сбрасываем на обычную температуру через D-Bus (set-property)
+        Quickshell.execDetached([
+            "busctl", "--user", "set-property", 
+            "rs.wl-gammarelay", "/", "rs.wl.gammarelay", 
+            "Temperature", "q", String(root.normalTemp)
+        ])
+    }
+    
+    function toggleNightMode() {
+        var newState = !root.nightModeEnabled
+        root.nightModeEnabled = newState
+        nightModeFileWriter.setText(newState ? "1" : "0")
+        
+        if (newState) {
+            enableNightMode()
+        } else {
+            disableNightMode()
+        }
+        
+        if (root.soundPlayer) {
+            root.soundPlayer.play(newState ? "switch.wav" : "tick.wav")
+        }
+        
+        Qt.callLater(function() {
+            var msg = newState 
+                ? "Цветовая температура: " + root.nightTemp + "K" 
+                : "Цветовая температура: обычная"
+            Quickshell.execDetached(["notify-send", "-u", "normal", "Ночной режим", msg])
+        })
+    }
 
+    // === UI ===
     Rectangle {
         id: mainBlock
         anchors.fill: parent
@@ -118,6 +209,19 @@ Item {
             anchors.fill: parent
             anchors.margins: 10
             spacing: 8
+
+            // Ночной режим (ПЕРВАЯ)
+            ToggleButton {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                icon: root.nightModeEnabled ? "󰖔" : "󰖨"
+                enabled: root.nightModeEnabled
+                activeColor: root.theme ? root.theme.colors.accent : "#5B9BFF"
+                inactiveColor: root.theme ? root.theme.colors.surfaceSelected : "#2C3A50"
+                textColor: root.theme ? root.theme.colors.text : "#F0F4F8"
+                secondaryTextColor: root.theme ? root.theme.colors.textSecondary : "#9AA9B9"
+                onClicked: root.toggleNightMode()
+            }
 
             ToggleButton {
                 Layout.fillWidth: true
@@ -200,6 +304,7 @@ Item {
     Component.onCompleted: {
         wifiStatus.running = true
         bluetoothStatus.running = true
+        nightModeCheck.running = true
     }
 
     Timer {
@@ -209,6 +314,7 @@ Item {
         onTriggered: {
             wifiStatus.running = true
             bluetoothStatus.running = true
+            nightModeCheck.running = true
         }
     }
 }

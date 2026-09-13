@@ -68,7 +68,6 @@ Item {
         root.brightness = value
         brightnessSet.pendingValue = Math.round(value * 100)
         brightnessSet.running = true
-        if (root.soundPlayer) root.soundPlayer.playDebounced("tick.wav")
     }
 
     function setVolume(value) {
@@ -77,7 +76,6 @@ Item {
         volumeSet.pendingValue = value
         volumeSet.running = true
         if (value > 0 && root.muted) volumeMute.running = true
-        if (root.soundPlayer) root.soundPlayer.playDebounced("tick.wav")
     }
 
     function toggleMute() {

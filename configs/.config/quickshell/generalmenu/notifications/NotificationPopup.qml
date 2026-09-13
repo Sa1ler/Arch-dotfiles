@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Io
 
 PanelWindow {
     id: root
@@ -13,6 +12,10 @@ PanelWindow {
 
     property string notificationPosition: "top-right"
     property string slideDirection: "right"
+    
+    // === Единая точка управления шириной ===
+    readonly property int cardWidth: 340
+    readonly property int edgeMargin: 20
 
     anchors {
         top: true
@@ -30,33 +33,40 @@ PanelWindow {
 
     mask: Region { item: notificationColumn }
 
-    Item {
+    Column {
         id: notificationColumn
-        width: 380
+        width: root.cardWidth
+        spacing: root.stackSpacing
+        
+        x: parent.width - root.cardWidth - root.edgeMargin
+        y: root.edgeMargin
 
-        height: {
-            var total = 0
-            for (var i = 0; i < notificationRepeater.count; ++i) {
-                var item = notificationRepeater.itemAt(i)
-                if (item) total += item.height
-                if (i < notificationRepeater.count - 1) total += root.stackSpacing
+        Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        
+        // === ПЛАВНОЕ СМЕЩЕНИЕ существующих карточек ===
+        // Срабатывает когда:
+        // 1. Появилась новая карточка → существующие съезжают вниз
+        // 2. Карточка исчезла → существующие поднимаются вверх
+        move: Transition {
+            NumberAnimation { 
+                properties: "y"
+                duration: 300
+                easing.type: Easing.OutCubic 
             }
-            return Math.max(1, total)
         }
-
-        x: parent.width - 380 - 20
-        y: 20
-
-        Behavior on x {
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-        }
-
-        Behavior on y {
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+        
+        // === ПЛАВНОЕ ПОЯВЛЕНИЕ новых карточек (позиция) ===
+        add: Transition {
+            NumberAnimation {
+                properties: "y"
+                from: -50
+                duration: 280
+                easing.type: Easing.OutCubic
+            }
         }
 
         Repeater {
-            id: notificationRepeater
             model: root.notificationModel.popupNotifications
 
             delegate: Item {
@@ -64,25 +74,11 @@ PanelWindow {
                 required property int index
                 required property var notification
 
-                width: 380
+                width: root.cardWidth
                 height: card.height
 
                 Behavior on height {
                     NumberAnimation { duration: 260; easing.type: Easing.InCubic }
-                }
-
-                y: {
-                    var position = 0
-                    for (var i = 0; i < index; ++i) {
-                        var previous = notificationRepeater.itemAt(i)
-                        if (previous) position += previous.height
-                        position += root.stackSpacing
-                    }
-                    return position
-                }
-
-                Behavior on y {
-                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
                 }
 
                 NotificationCard {
@@ -90,7 +86,7 @@ PanelWindow {
                     notification: delegateRoot.notification
                     theme: root.theme
                     soundPlayer: root.soundPlayer
-                    width: 380
+                    width: root.cardWidth
                     autoClose: true
                     slideDirection: root.slideDirection
 

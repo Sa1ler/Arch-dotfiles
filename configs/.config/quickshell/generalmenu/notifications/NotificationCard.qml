@@ -15,17 +15,27 @@ Item {
 
     signal closed()
 
-    width: 380
+    width: 340   // ← БЫЛО 380
     height: closing ? closeHeight : card.height
     opacity: 0
 
-    property string notificationType: !notification ? "info" : (notification.urgency === 2 ? "critical" : "info")
-    property string typeIcon: notificationType === "critical" ? "!" : "i"
-    property color typeColor: notificationType === "critical" ? "#FF453A" : root.theme.colors.accent
+    // === Кэшированные свойства уведомления ===
+    readonly property bool isCritical: notification ? notification.urgency === 2 : false
+    readonly property string typeIcon: isCritical ? "!" : "i"
+    readonly property color typeColor: isCritical ? "#FF453A" : (theme ? theme.colors.accent : "#5B9BFF")
+    
+    readonly property string appName: notification ? (notification.appName || "Notification") : ""
+    readonly property string summary: notification ? (notification.summary || "") : ""
+    readonly property string body: notification ? (notification.body || "") : ""
+    readonly property bool hasBody: body !== ""
+    
+    readonly property color surfaceColor: theme ? theme.colors.surface : "#202020"
+    readonly property color textColor: theme ? theme.colors.text : "#FFFFFF"
+    readonly property color textSecColor: theme ? theme.colors.textSecondary : "#A0A0A0"
 
     function closeCard() {
         if (closing) return
-        if (root.soundPlayer) root.soundPlayer.play("tick.wav")
+        if (soundPlayer) soundPlayer.play("tick.wav")
         closeHeight = height
         closing = true
         expireTimer.stop()
@@ -34,12 +44,10 @@ Item {
 
     Component.onCompleted: {
         appear.start()
-        if (root.autoClose) {
-            if (notification && notification.expireTimeout > 0) {
-                expireTimer.interval = notification.expireTimeout * 1000
-            } else {
-                expireTimer.interval = 5000
-            }
+        if (autoClose && notification) {
+            expireTimer.interval = notification.expireTimeout > 0 
+                ? notification.expireTimeout * 1000 
+                : 5000
             expireTimer.start()
         }
     }
@@ -57,16 +65,27 @@ Item {
         }
     }
 
+    // === Упрощённая анимация slide ===
+    readonly property bool isVertical: slideDirection === "up" || slideDirection === "down"
+    readonly property real slideOffset: (slideDirection === "left" || slideDirection === "up") ? -80 : 80
+
     Translate { id: slide }
     transform: slide
 
     ParallelAnimation {
         id: appear
-        NumberAnimation { target: root; property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
-        PropertyAnimation {
+        NumberAnimation { 
+            target: root
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: 220
+            easing.type: Easing.OutCubic 
+        }
+        NumberAnimation {
             target: slide
-            property: (slideDirection === "up" || slideDirection === "down") ? "y" : "x"
-            from: (slideDirection === "left" || slideDirection === "up") ? -80 : 80
+            property: isVertical ? "y" : "x"
+            from: slideOffset
             to: 0
             duration: 280
             easing.type: Easing.OutCubic
@@ -75,16 +94,30 @@ Item {
 
     ParallelAnimation {
         id: closeAnimation
-        NumberAnimation { target: root; property: "opacity"; from: 1; to: 0; duration: 220; easing.type: Easing.InCubic }
-        PropertyAnimation {
+        NumberAnimation { 
+            target: root
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: 220
+            easing.type: Easing.InCubic 
+        }
+        NumberAnimation {
             target: slide
-            property: (slideDirection === "up" || slideDirection === "down") ? "y" : "x"
+            property: isVertical ? "y" : "x"
             from: 0
-            to: (slideDirection === "left" || slideDirection === "up") ? -80 : 80
+            to: slideOffset
             duration: 260
             easing.type: Easing.InCubic
         }
-        NumberAnimation { target: root; property: "closeHeight"; from: root.closeHeight; to: 0; duration: 260; easing.type: Easing.InCubic }
+        NumberAnimation { 
+            target: root
+            property: "closeHeight"
+            from: root.closeHeight
+            to: 0
+            duration: 260
+            easing.type: Easing.InCubic 
+        }
         onFinished: root.closed()
     }
 
@@ -93,61 +126,70 @@ Item {
         width: parent.width
         height: contentRow.implicitHeight + 24
         radius: 18
-        color: root.theme.colors.surface
-        antialiasing: true
+        color: surfaceColor
         border.width: 1
-        border.color: root.hovered ? Qt.lighter(root.typeColor, 1.15) : Qt.rgba(root.typeColor.r, root.typeColor.g, root.typeColor.b, 0.28)
+        border.color: hovered ? Qt.lighter(typeColor, 1.15) : Qt.rgba(typeColor.r, typeColor.g, typeColor.b, 0.28)
+        
         Behavior on border.color { ColorAnimation { duration: 180 } }
 
+        // Внутренняя подсветка
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
             color: "transparent"
             border.width: 1
-            border.color: root.typeColor
-            opacity: root.hovered ? 0.16 : 0.06
-            antialiasing: true
+            border.color: typeColor
+            opacity: hovered ? 0.16 : 0.06
             Behavior on opacity { NumberAnimation { duration: 180 } }
         }
 
         Row {
             id: contentRow
-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
+            anchors { 
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 12 
+            }
             spacing: 10
 
+            // Иконка типа
             Rectangle {
                 id: typeBox
                 width: 42
                 height: 42
                 radius: 12
-                color: Qt.rgba(root.typeColor.r, root.typeColor.g, root.typeColor.b, 0.10)
+                color: Qt.rgba(typeColor.r, typeColor.g, typeColor.b, 0.10)
                 border.width: 1
-                border.color: Qt.rgba(root.typeColor.r, root.typeColor.g, root.typeColor.b, root.hovered ? 0.65 : 0.32)
-                anchors.top: parent.top
-                antialiasing: true
+                border.color: Qt.rgba(typeColor.r, typeColor.g, typeColor.b, hovered ? 0.65 : 0.32)
+                
                 Behavior on border.color { ColorAnimation { duration: 180 } }
 
                 Text {
                     anchors.centerIn: parent
-                    text: root.typeIcon
-                    color: root.typeColor
+                    text: typeIcon
+                    color: typeColor
                     font.family: "Cascadia Code"
                     font.pixelSize: 20
                     font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
                 }
 
+                // Индикатор
                 Rectangle {
                     width: 5
                     height: 5
                     radius: 2.5
-                    anchors { right: parent.right; bottom: parent.bottom; rightMargin: 5; bottomMargin: 5 }
-                    color: root.typeColor
-                    antialiasing: true
+                    anchors { 
+                        right: parent.right
+                        bottom: parent.bottom
+                        rightMargin: 5
+                        bottomMargin: 5 
+                    }
+                    color: typeColor
                 }
             }
 
+            // Текст и действия
             Column {
                 id: textColumn
                 width: parent.width - typeBox.width - parent.spacing
@@ -155,8 +197,8 @@ Item {
 
                 Text {
                     width: parent.width
-                    text: !root.notification ? "" : root.notification.appName || "Notification"
-                    color: root.theme.colors.textSecondary
+                    text: appName
+                    color: textSecColor
                     font.family: "Cascadia Code"
                     font.pixelSize: 10
                     font.bold: true
@@ -165,8 +207,8 @@ Item {
 
                 Text {
                     width: parent.width
-                    text: !root.notification ? "" : root.notification.summary || ""
-                    color: root.theme.colors.text
+                    text: summary
+                    color: textColor
                     font.family: "Cascadia Code"
                     font.pixelSize: 14
                     font.bold: true
@@ -177,9 +219,9 @@ Item {
 
                 Text {
                     width: parent.width
-                    visible: !root.notification ? false : root.notification.body !== ""
-                    text: !root.notification ? "" : root.notification.body || ""
-                    color: root.theme.colors.textSecondary
+                    visible: hasBody
+                    text: body
+                    color: textSecColor
                     font.family: "Cascadia Code"
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
@@ -198,19 +240,26 @@ Item {
             }
         }
 
+        // Кнопка закрытия
         Rectangle {
             id: closeButton
-            anchors { top: parent.top; right: parent.right; topMargin: 8; rightMargin: 8 }
+            anchors { 
+                top: parent.top
+                right: parent.right
+                topMargin: 8
+                rightMargin: 8 
+            }
             width: 22
             height: 22
             radius: 11
-            color: closeArea.containsMouse ? Qt.rgba(root.theme.colors.text.r, root.theme.colors.text.g, root.theme.colors.text.b, 0.15) : Qt.rgba(root.theme.colors.text.r, root.theme.colors.text.g, root.theme.colors.text.b, 0.07)
-            antialiasing: true
+            color: closeArea.containsMouse 
+                ? Qt.rgba(textColor.r, textColor.g, textColor.b, 0.15) 
+                : Qt.rgba(textColor.r, textColor.g, textColor.b, 0.07)
 
             Text {
                 anchors.centerIn: parent
                 text: "×"
-                color: root.theme.colors.text
+                color: textColor
                 font.family: "Cascadia Code"
                 font.pixelSize: 16
             }

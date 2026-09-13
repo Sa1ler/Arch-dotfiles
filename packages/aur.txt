@@ -6,5 +6,7 @@ peaclock
 peaclock-debug
 quickshell-git
 visual-studio-code-bin
+wl-gammarelay-rs
+wl-gammarelay-rs-debug
 yay
 yay-debug
