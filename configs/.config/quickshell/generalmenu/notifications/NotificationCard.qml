@@ -15,15 +15,113 @@ Item {
 
     signal closed()
 
-    width: 340   // ← БЫЛО 380
+    width: 380
     height: closing ? closeHeight : card.height
     opacity: 0
 
-    // === Кэшированные свойства уведомления ===
-    readonly property bool isCritical: notification ? notification.urgency === 2 : false
-    readonly property string typeIcon: isCritical ? "!" : "i"
-    readonly property color typeColor: isCritical ? "#FF453A" : (theme ? theme.colors.accent : "#5B9BFF")
+    // === Определение категории из hints ===
+    readonly property string category: {
+        if (!notification || !notification.hints) return ""
+        try {
+            return notification.hints.category || notification.hints["category"] || ""
+        } catch(e) { return "" }
+    }
     
+    readonly property int urgency: notification ? notification.urgency : 1
+    readonly property bool isCritical: urgency === 2
+    readonly property bool isLowPriority: urgency === 0
+    
+    // === Умный подбор иконки по категории (расширенный) ===
+    readonly property string typeIcon: {
+        // Медиа
+        if (category.indexOf("music") !== -1) return "󰎆"
+        if (category.indexOf("video") !== -1) return "󰕼"
+        if (category.indexOf("media") !== -1) return "󰎇"
+        
+        // Сообщения
+        if (category.indexOf("im") !== -1) return "󰍡"
+        if (category.indexOf("message") !== -1) return "󰍡"
+        if (category.indexOf("chat") !== -1) return "󰭹"
+        if (category.indexOf("email") !== -1) return "󰇮"
+        if (category.indexOf("mail") !== -1) return "󰇮"
+        
+        // Устройства
+        if (category.indexOf("device.added") !== -1) return "󰐱"
+        if (category.indexOf("device.removed") !== -1) return "󰋙"
+        if (category.indexOf("device") !== -1) return "󰐱"
+        if (category.indexOf("usb") !== -1) return "󰐱"
+        if (category.indexOf("bluetooth") !== -1) return "󰂯"
+        
+        // Сеть
+        if (category.indexOf("network.connected") !== -1) return "󰖩"
+        if (category.indexOf("network.disconnected") !== -1) return "󰖪"
+        if (category.indexOf("network") !== -1) return "󰖩"
+        if (category.indexOf("wifi") !== -1) return "󰖩"
+        
+        // Питание
+        if (category.indexOf("battery.low") !== -1) return "󰂃"
+        if (category.indexOf("battery.full") !== -1) return "󰁹"
+        if (category.indexOf("battery") !== -1) return "󰁹"
+        if (category.indexOf("power") !== -1) return "󰚥"
+        
+        // Система
+        if (category.indexOf("system.update") !== -1) return "󰚑"
+        if (category.indexOf("system") !== -1) return "󰒓"
+        if (category.indexOf("update") !== -1) return "󰚑"
+        
+        // Передача файлов
+        if (category.indexOf("transfer.complete") !== -1) return "󰄴"
+        if (category.indexOf("transfer") !== -1) return "󰈷"
+        if (category.indexOf("download") !== -1) return "󰇚"
+        if (category.indexOf("upload") !== -1) return "󰕛"
+        
+        // Скриншоты и камера
+        if (category.indexOf("screenshot") !== -1) return "󰄀"
+        if (category.indexOf("camera") !== -1) return "󰄀"
+        if (category.indexOf("microphone") !== -1) return "󰍬"
+        
+        // Звук
+        if (category.indexOf("volume") !== -1) return "󰕾"
+        if (category.indexOf("sound") !== -1) return "󰕾"
+        
+        // Календарь и напоминания
+        if (category.indexOf("calendar") !== -1) return "󰃭"
+        if (category.indexOf("reminder") !== -1) return "󰥔"
+        if (category.indexOf("alarm") !== -1) return "󰀪"
+        
+        // Безопасность
+        if (category.indexOf("security") !== -1) return "󰒪"
+        if (category.indexOf("auth") !== -1) return "󰌆"
+        if (category.indexOf("password") !== -1) return "󰌆"
+        
+        // Погода
+        if (category.indexOf("weather") !== -1) return "󰖙"
+        
+        // Принтер
+        if (category.indexOf("printer") !== -1) return "󰐪"
+        
+        // Локация
+        if (category.indexOf("location") !== -1) return "󰆤"
+        
+        // По приоритету (если категория не определена)
+        if (isCritical) return "󰀨"
+        if (isLowPriority) return "󰈣"
+        return "󰂚"
+    }
+    
+    // === Цвет по типу ===
+    readonly property color typeColor: {
+        if (isCritical) return "#FF453A"
+        if (isLowPriority) return "#8E8E93"
+        if (category.indexOf("power") !== -1 || category.indexOf("battery") !== -1) return "#32D74B"
+        if (category.indexOf("network") !== -1 || category.indexOf("wifi") !== -1) return "#0A84FF"
+        if (category.indexOf("music") !== -1 || category.indexOf("media") !== -1) return "#FF2D55"
+        if (category.indexOf("email") !== -1 || category.indexOf("im") !== -1) return "#5E5CE6"
+        if (category.indexOf("security") !== -1 || category.indexOf("auth") !== -1) return "#FF9F0A"
+        return theme ? theme.colors.accent : "#5B9BFF"
+    }
+    
+    // === Кэшированные данные ===
     readonly property string appName: notification ? (notification.appName || "Notification") : ""
     readonly property string summary: notification ? (notification.summary || "") : ""
     readonly property string body: notification ? (notification.body || "") : ""
@@ -45,13 +143,15 @@ Item {
     Component.onCompleted: {
         appear.start()
         if (autoClose && notification) {
-            expireTimer.interval = notification.expireTimeout > 0 
+            var timeout = notification.expireTimeout > 0 
                 ? notification.expireTimeout * 1000 
                 : 5000
+            expireTimer.interval = timeout
             expireTimer.start()
         }
     }
 
+    // === Таймер автозакрытия ===
     Timer {
         id: expireTimer
         repeat: false
@@ -65,7 +165,7 @@ Item {
         }
     }
 
-    // === Упрощённая анимация slide ===
+    // === Анимации появления/закрытия ===
     readonly property bool isVertical: slideDirection === "up" || slideDirection === "down"
     readonly property real slideOffset: (slideDirection === "left" || slideDirection === "up") ? -80 : 80
 
@@ -121,6 +221,7 @@ Item {
         onFinished: root.closed()
     }
 
+    // === ОСНОВНАЯ КАРТОЧКА (оригинальный дизайн) ===
     Rectangle {
         id: card
         width: parent.width
@@ -153,7 +254,7 @@ Item {
             }
             spacing: 10
 
-            // Иконка типа
+            // === Иконка типа (оригинальный вид) ===
             Rectangle {
                 id: typeBox
                 width: 42
@@ -169,7 +270,7 @@ Item {
                     anchors.centerIn: parent
                     text: typeIcon
                     color: typeColor
-                    font.family: "Cascadia Code"
+                    font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -189,12 +290,13 @@ Item {
                 }
             }
 
-            // Текст и действия
+            // === Контент справа ===
             Column {
                 id: textColumn
                 width: parent.width - typeBox.width - parent.spacing
                 spacing: 4
 
+                // Название приложения
                 Text {
                     width: parent.width
                     text: appName
@@ -204,7 +306,20 @@ Item {
                     font.bold: true
                     elide: Text.ElideRight
                 }
+                
+                // === НОВОЕ: Категория ===
+                Text {
+                    width: parent.width
+                    visible: category !== ""
+                    text: category.replace(/[._]/g, " ")
+                    color: Qt.rgba(typeColor.r, typeColor.g, typeColor.b, 0.75)
+                    font.family: "Cascadia Code"
+                    font.pixelSize: 8
+                    font.letterSpacing: 0.3
+                    elide: Text.ElideRight
+                }
 
+                // Заголовок
                 Text {
                     width: parent.width
                     text: summary
@@ -217,6 +332,7 @@ Item {
                     elide: Text.ElideRight
                 }
 
+                // Тело уведомления
                 Text {
                     width: parent.width
                     visible: hasBody
@@ -229,6 +345,7 @@ Item {
                     elide: Text.ElideRight
                 }
 
+                // Действия
                 NotificationActions {
                     width: parent.width
                     notification: root.notification
@@ -240,7 +357,7 @@ Item {
             }
         }
 
-        // Кнопка закрытия
+        // === Кнопка закрытия ===
         Rectangle {
             id: closeButton
             anchors { 

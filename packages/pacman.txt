@@ -37,6 +37,7 @@ libpulse
 libva-intel-driver
 linux
 linux-firmware
+matugen
 meson
 micro
 nano

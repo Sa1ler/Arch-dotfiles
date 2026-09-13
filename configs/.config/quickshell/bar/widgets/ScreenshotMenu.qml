@@ -20,7 +20,7 @@ Item {
         console.log("[ScreenshotMenu] Taking full screenshot")
         Quickshell.execDetached([
             "sh", "-c",
-            "grim - | wl-copy && notify-send '📸 Скриншот' 'Полный снимок скопирован в буфер' -i camera -t 2000"
+            "grim - | wl-copy && notify-send -h string:category:screenshot 'Скриншот' 'Сохранён в буфер обмена'"
         ])
         // 🔊 quick_click.wav — снимок сделан
         if (root.soundManager) root.soundManager.play("quick_click.wav")
@@ -31,7 +31,7 @@ Item {
         console.log("[ScreenshotMenu] Taking region screenshot")
         Quickshell.execDetached([
             "sh", "-c",
-            "grim -g \"$(slurp)\" - | wl-copy && notify-send '📸 Скриншот' 'Снимок области скопирован' -i camera -t 2000"
+            "grim -g \"$(slurp)\" - | wl-copy && notify-send -h string:category:screenshot 'Скриншот области' 'Скриншот области скопирован в буфер обмена'"
         ])
         // 🔊 quick_click.wav — снимок области сделан
         if (root.soundManager) root.soundManager.play("quick_click.wav")
