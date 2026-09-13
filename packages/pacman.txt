@@ -1,14 +1,19 @@
 base
 base-devel
+blueman
 bluez
 bluez-utils
 brightnessctl
+btop
+cava
 chromium
 cliphist
+cmatrix
 dolphin
 dunst
 efibootmgr
 fastfetch
+fd
 firefox
 fish
 fzf
@@ -63,6 +68,7 @@ qt6-virtualkeyboard
 qt6-wayland
 rsync
 sddm
+sl
 slurp
 smartmontools
 socat

@@ -24,6 +24,7 @@ hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("qs -c bar ipc call topbar toggleThem
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("qs -c bar ipc call topbar toggleLauncher"))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("qs -c generalmenu ipc call panel toggle"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("qs -c bar ipc call topbar toggleClipboard"))
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("qs -c settings ipc call settings toggle"))
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(vpn))
 hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("/home/" .. os.getenv("USER") .. "/.local/bin/hypr-float toggle 70"))

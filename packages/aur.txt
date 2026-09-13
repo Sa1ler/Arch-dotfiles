@@ -1,4 +1,7 @@
+bb-debug
 happ-desktop-bin
+lavat
+lavat-debug
 peaclock
 peaclock-debug
 quickshell-git
