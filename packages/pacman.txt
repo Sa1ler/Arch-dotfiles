@@ -6,7 +6,6 @@ bluez-utils
 brightnessctl
 btop
 cava
-chromium
 cliphist
 cmatrix
 dolphin
@@ -39,7 +38,6 @@ linux
 linux-firmware
 matugen
 meson
-micro
 nano
 neovim
 network-manager-applet
@@ -52,6 +50,7 @@ pipewire
 pipewire-alsa
 pipewire-jack
 pipewire-pulse
+playerctl
 polkit-kde-agent
 python-pam
 python-pip

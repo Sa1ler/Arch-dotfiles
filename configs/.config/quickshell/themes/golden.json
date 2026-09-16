@@ -1,0 +1,16 @@
+{
+    "name": "Golden",
+    "colors": {
+        "background": "#1C1408",
+        "surface": "#281C0C",
+        "surfaceHover": "#392812",
+        "surfaceSelected": "#4D371A",
+        "accent": "#F5B942",
+        "text": "#F8EBD0",
+        "textSecondary": "#C2A878",
+        "textDisabled": "#6B5735",
+        "textSelected": "#1C1408",
+        "border": "#392812",
+        "separator": "#281C0C"
+    }
+}

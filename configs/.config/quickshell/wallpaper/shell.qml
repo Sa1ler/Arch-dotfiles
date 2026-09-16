@@ -84,7 +84,7 @@ ShellRoot {
             }
         }
         
-        // Маска — прямоугольник, расширяющийся из центра
+        // Маска — круг, расширяющийся из центра
         Item {
             id: maskItem
             width: nextImage.width
@@ -94,32 +94,33 @@ ShellRoot {
             
             Rectangle {
                 id: maskRect
-                width: root.wipeProgress * maskItem.width
-                height: maskItem.height
                 color: "white"
-                x: (maskItem.width - width) / 2  // Центрирование
-                y: 0
+                
+                readonly property real p: root.wipeProgress
+                readonly property real cx: parent.width / 2
+                readonly property real cy: parent.height / 2
+                readonly property real maxR: Math.sqrt(cx * cx + cy * cy)
+                readonly property real diam: p * maxR * 2
+                
+                width: diam
+                height: diam
+                x: cx - width / 2
+                y: cy - height / 2
+                radius: width / 2
             }
         }
         
-        // Две светлые полоски по краям
+        // Светящаяся окружность по краю маски
         Rectangle {
-            id: glowLeft
-            width: 3
-            height: wallpaperWindow.height
-            color: Qt.rgba(1, 1, 1, 0.4)
-            x: (wallpaperWindow.width - root.wipeProgress * wallpaperWindow.width) / 2 - 1.5
-            y: 0
-            visible: root.isTransitioning && root.wipeProgress > 0 && root.wipeProgress < 1
-        }
-        
-        Rectangle {
-            id: glowRight
-            width: 3
-            height: wallpaperWindow.height
-            color: Qt.rgba(1, 1, 1, 0.4)
-            x: (wallpaperWindow.width + root.wipeProgress * wallpaperWindow.width) / 2 - 1.5
-            y: 0
+            id: glowRing
+            width: maskRect.diam
+            height: maskRect.diam
+            x: maskRect.x
+            y: maskRect.y
+            radius: width / 2
+            color: "transparent"
+            border.width: 3
+            border.color: Qt.rgba(1, 1, 1, 0.4)
             visible: root.isTransitioning && root.wipeProgress > 0 && root.wipeProgress < 1
         }
     }
@@ -130,8 +131,8 @@ ShellRoot {
         property: "wipeProgress"
         from: 0
         to: 1
-        duration: 700
-        easing.type: Easing.InOutQuart
+        duration: 1000
+        easing.type: Easing.InOutCubic
         
         onStopped: {
             root.finishWipe()
@@ -144,7 +145,7 @@ ShellRoot {
         property: "opacity"
         from: 1.0
         to: 0.8
-        duration: 400
+        duration: 800
         easing.type: Easing.OutCubic
     }
 
