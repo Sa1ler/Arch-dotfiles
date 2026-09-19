@@ -6,15 +6,16 @@ Item {
     id: root
 
     property var theme: null
+    property var wifiPopup: null
     property string wifiState: "off"  // "off", "on", "connected"
     property string networkName: ""
-    
+
     // === Кэш цветов темы ===
     readonly property color accentColor: root.theme && root.theme.colors ? root.theme.colors.accent : "#5B9BFF"
     readonly property color badgeTextColor: root.theme && root.theme.colors && root.theme.colors.textSelected ? root.theme.colors.textSelected : "#FFFFFF"
     readonly property color offBgColor: "#3A3A3A"
     readonly property color offTextColor: "#888888"
-    
+
     implicitWidth: wifiCard.implicitWidth
     implicitHeight: wifiCard.implicitHeight
 
@@ -22,22 +23,22 @@ Item {
     Process {
         id: getWifiStatus
         command: ["sh", "-c", "LC_ALL=C nmcli -t -f active,ssid dev wifi 2>/dev/null"]
-        
+
         stdout: StdioCollector {
             onStreamFinished: {
                 var output = text.trim()
-                
+
                 if (output.length === 0) {
                     // nmcli не может получить данные — скорее всего wifi выключен
                     root.wifiState = "off"
                     root.networkName = ""
                     return
                 }
-                
+
                 // Ищем активную сеть
                 var lines = output.split("\n")
                 var activeSSID = ""
-                
+
                 for (var i = 0; i < lines.length; i++) {
                     var parts = lines[i].split(":")
                     if (parts[0] === "yes" || parts[0] === "*" || parts[0] === "да") {
@@ -45,7 +46,7 @@ Item {
                         break
                     }
                 }
-                
+
                 if (activeSSID.length > 0) {
                     root.wifiState = "connected"
                     root.networkName = activeSSID
@@ -77,11 +78,11 @@ Item {
         implicitWidth: contentRow.implicitWidth + 10
         implicitHeight: 25
         radius: 8
-        
+
         color: root.wifiState === "off" ? root.offBgColor : root.accentColor
         border.width: 1
         border.color: root.wifiState === "off" ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.2)
-        
+
         Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutQuart } }
         Behavior on border.color { ColorAnimation { duration: 250; easing.type: Easing.OutQuart } }
 
@@ -89,7 +90,7 @@ Item {
             id: contentRow
             anchors.centerIn: parent
             spacing: 6
-            
+
             // Иконка: одинаковый wifi, но с разной насыщенностью
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -98,11 +99,11 @@ Item {
                 font.pixelSize: 28
                 color: root.wifiState === "off" ? root.offTextColor : root.badgeTextColor
                 opacity: root.wifiState === "off" ? 0.6 : 1
-                
+
                 Behavior on color { ColorAnimation { duration: 250 } }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
             }
-            
+
             // Текст состояния/сети
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -116,8 +117,29 @@ Item {
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
                 color: root.wifiState === "off" ? root.offTextColor : root.badgeTextColor
-                
+
                 Behavior on color { ColorAnimation { duration: 250 } }
+            }
+        }
+
+        // === MouseArea для открытия попапа ===
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+
+            onEntered: {
+                wifiCard.border.color = Qt.rgba(1, 1, 1, 0.3)
+            }
+
+            onExited: {
+                wifiCard.border.color = root.wifiState === "off" ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.2)
+            }
+
+            onClicked: {
+                if (root.wifiPopup) {
+                    root.wifiPopup.toggle()
+                }
             }
         }
     }

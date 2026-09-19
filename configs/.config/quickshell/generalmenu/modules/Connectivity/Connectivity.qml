@@ -111,7 +111,7 @@ Item {
         dndFileWriter.setText(newState ? "1" : "0")
         
         if (root.soundPlayer) {
-            root.soundPlayer.play(newState ? "switch.wav" : "tick.wav")
+            root.soundPlayer.play(newState ? "switch.wav" : "sfx.wav")
         }
         
         Qt.callLater(function() {
@@ -185,7 +185,7 @@ Item {
         }
         
         if (root.soundPlayer) {
-            root.soundPlayer.play(newState ? "switch.wav" : "tick.wav")
+            root.soundPlayer.play(newState ? "switch.wav" : "sfx.wav")
         }
         
         Qt.callLater(function() {

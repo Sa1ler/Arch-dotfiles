@@ -1,4 +1,5 @@
 bb-debug
+chatgpt-bin-debug
 happ-desktop-bin
 lavat
 lavat-debug

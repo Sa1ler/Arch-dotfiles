@@ -83,7 +83,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            if (root.soundPlayer) root.soundPlayer.play("quick_click.wav")
+                            if (root.soundPlayer) root.soundPlayer.play("click.wav")
                             root.requestClear()
                         }
                     }

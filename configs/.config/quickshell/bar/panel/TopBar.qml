@@ -13,16 +13,17 @@ PanelWindow {
     property var themeManager: null
     property var soundManager: null
     property var timePopup: null
+    property var wifiPopup: null
     property var stopwatch: null
     property var countdownTimer: null
-    
+
     // === Целочисленные свойства (быстрее, чем real) ===
     property int barHeight: 33
     property int topMargin: 6
     property int sideMargin: 3
     property int sectionRadius: 10
     property int sectionPadding: 6
-    
+
     // === State Machine: Единый источник правды для режимов ===
     readonly property int modeNone: 0
     readonly property int modeWallpaper: 1
@@ -48,7 +49,7 @@ PanelWindow {
     // === TextMetrics: Вычисляем ОДИН РАЗ при старте ===
     property int timeWidth: 0
     property int dateWidth: 0
-    
+
     Component.onCompleted: {
         timeWidth = timeMetrics.advanceWidth
         dateWidth = dateMetrics.advanceWidth
@@ -59,17 +60,17 @@ PanelWindow {
         font.family: "JetBrainsMono Nerd Font Mono"
         font.pixelSize: 17
         font.weight: Font.Black
-        text: "00:00" 
+        text: "00:00"
     }
-    
+
     TextMetrics {
         id: dateMetrics
         font.family: "JetBrainsMono Nerd Font Mono"
         font.pixelSize: 15
         font.weight: Font.Black
-        text: "30 сентября" 
+        text: "30 сентября"
     }
-    
+
     readonly property int centerBaseWidth: timeWidth + 10 + 5 + 10 + dateWidth + (sectionPadding * 2) + 12
     readonly property int centerExpandedWidth: timeWidth + 10 + badgeWidth + 10 + dateWidth + (sectionPadding * 2) + 12
 
@@ -77,7 +78,7 @@ PanelWindow {
     function setMode(mode) {
         currentMode = (currentMode === mode) ? modeNone : mode
     }
-    
+
     function closeMode(mode) {
         if (currentMode === mode) currentMode = modeNone
     }
@@ -91,7 +92,7 @@ PanelWindow {
     Connections {
         target: root.countdownTimer
         enabled: root.countdownTimer !== null
-        
+
         function onFinishedChanged() {
             if (countdownTimer && countdownTimer.finished) {
                 root.currentMode = modeTimerFinished
@@ -103,7 +104,7 @@ PanelWindow {
             }
         }
     }
-    
+
     Timer {
         id: autoCloseTimer
         interval: 5000
@@ -122,16 +123,16 @@ PanelWindow {
     }
 
     implicitHeight: root.topMargin + root.barHeight + Math.max(
-        root.expandedHeight, 
-        root.launcherHeight, 
-        root.screenshotHeight, 
+        root.expandedHeight,
+        root.launcherHeight,
+        root.screenshotHeight,
         root.timerFinishedHeight
     )
 
     exclusiveZone: barHeight + topMargin
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: root.anyModeActive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    
+
     mask: Region {
         Region { item: leftSectionBg }
         Region { item: centerSectionBg }
@@ -151,7 +152,7 @@ PanelWindow {
         color: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
         border.color: root.theme && root.theme.colors ? (root.theme.colors.border || "#2A2A2A") : "#2A2A2A"
-        
+
         LeftSection {
             id: leftSection
             anchors.centerIn: parent
@@ -159,23 +160,23 @@ PanelWindow {
             soundManager: root.soundManager
         }
     }
-    
+
     // ===== ЦЕНТРАЛЬНЫЙ СЕКТОР =====
     Rectangle {
         id: centerSectionBg
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: root.topMargin
-        
+
         width: {
             // === НОВОЕ: Расширение при активной записи ===
             if (root.screenRecording) return root.centerExpandedWidth
-            
+
             switch (root.currentMode) {
                 case root.modeTimerFinished: return root.timerFinishedWidth
                 case root.modeLauncher: return root.launcherWidth
                 case root.modeScreenshot: return root.screenshotWidth
-                case root.modeWallpaper: 
+                case root.modeWallpaper:
                 case root.modeTheme: return root.expandedWidth
                 default:
                     var hasTimer = root.countdownTimer && root.countdownTimer.running
@@ -183,67 +184,67 @@ PanelWindow {
                     return (hasTimer || hasStopwatch) ? root.centerExpandedWidth : root.centerBaseWidth
             }
         }
-        
+
         height: {
             switch (root.currentMode) {
                 case root.modeTimerFinished: return root.timerFinishedHeight
                 case root.modeLauncher: return root.launcherHeight
                 case root.modeScreenshot: return root.screenshotHeight
-                case root.modeWallpaper: 
+                case root.modeWallpaper:
                 case root.modeTheme: return root.expandedHeight
                 default: return root.barHeight
             }
         }
-        
+
         radius: root.sectionRadius
         color: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
         border.color: root.theme && root.theme.colors ? (root.theme.colors.border || "#2A2A2A") : "#2A2A2A"
-        clip: true 
-        
+        clip: true
+
         Behavior on width {
             NumberAnimation { duration: 300; easing.type: Easing.OutQuart }
         }
-        
+
         Behavior on height {
             NumberAnimation { duration: 300; easing.type: Easing.OutQuart }
         }
-        
+
         CenterSection {
             id: centerSection
             anchors.fill: parent
             anchors.margins: root.anyModeActive ? 0 : root.sectionPadding
-            
+
             theme: root.theme
             themeManager: root.themeManager
             soundManager: root.soundManager
             stopwatch: root.stopwatch
             countdownTimer: root.countdownTimer
-            
+
             wallpaperMode: root.currentMode === root.modeWallpaper
             themeMode: root.currentMode === root.modeTheme
             launcherMode: root.currentMode === root.modeLauncher
             screenshotMode: root.currentMode === root.modeScreenshot
             timerFinishedMode: root.currentMode === root.modeTimerFinished
-            
+
             onClosed: {
                 root.currentMode = root.modeNone
                 dismissTimer()
             }
         }
-        
+
         MouseArea {
             anchors.fill: parent
             // === ИСПРАВЛЕНО: Отключаем при активной записи (чтобы клик по бейджу не открывал попап) ===
             enabled: !root.anyModeActive
             cursorShape: Qt.PointingHandCursor
-            
+
             onClicked: {
                 if (root.timePopup) root.timePopup.toggle()
             }
         }
     }
-    
+
     // ===== ПРАВЫЙ СЕКТОР =====
     Rectangle {
         id: rightSectionBg
@@ -257,12 +258,13 @@ PanelWindow {
         color: root.theme && root.theme.colors ? root.theme.colors.surface : "#1A1F26"
         border.width: 1
         border.color: root.theme && root.theme.colors ? (root.theme.colors.border || "#2A2A2A") : "#2A2A2A"
-        
+
         RightSection {
             id: rightSection
             anchors.centerIn: parent
             theme: root.theme
             soundManager: root.soundManager
+            wifiPopup: root.wifiPopup
         }
     }
 }
